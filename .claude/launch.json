@@ -1,0 +1,1 @@
+{"version":"0.0.1","configurations":[{"name":"crane-analytics","runtimeExecutable":"npm","runtimeArgs":["run","dev","--","--port","3737"],"port":3737}]}

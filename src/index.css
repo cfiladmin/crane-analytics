@@ -1,0 +1,40 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: #F8FAFC;
+  color: #0F172A;
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+/* Prevent text selection on tap buttons */
+.no-select {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: #F1F5F9; }
+::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 2px; }
+
+/* Subtle glow utilities (toned down for light bg) */
+.glow-amber { box-shadow: 0 0 16px rgba(217,119,6,0.2); }
+.glow-red   { box-shadow: 0 0 16px rgba(220,38,38,0.2); }
+.glow-green { box-shadow: 0 0 16px rgba(5,150,105,0.2); }
+
+/* Numeric counter font */
+.font-num { font-family: 'JetBrains Mono', Consolas, monospace; }
+
+/* Active press effect */
+.btn-press:active { transform: scale(0.95); }
