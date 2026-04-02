@@ -1,20 +1,34 @@
-import { useState } from 'react';
-import { signInWithPopup } from 'firebase/auth';
+import { useState, useEffect } from 'react';
+import { signInWithRedirect, getRedirectResult } from 'firebase/auth';
 import { auth, provider } from '../firebase';
 
 export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState('');
 
+  // リダイレクト後に戻ってきたときの処理
+  useEffect(() => {
+    setLoading(true);
+    getRedirectResult(auth)
+      .then(result => {
+        // result があればログイン成功 → onAuthStateChanged が自動で user をセット
+        if (!result) setLoading(false);
+      })
+      .catch(e => {
+        console.error(e);
+        setError(`ログインに失敗しました（${e.code}）`);
+        setLoading(false);
+      });
+  }, []);
+
   const handleLogin = async () => {
     setLoading(true);
     setError('');
     try {
-      await signInWithPopup(auth, provider);
+      await signInWithRedirect(auth, provider);
+      // ← ここでGoogleにリダイレクト、戻ってきたら上のuseEffectで処理
     } catch (e) {
-      if (e.code !== 'auth/popup-closed-by-user') {
-        setError('ログインに失敗しました。もう一度お試しください。');
-      }
+      setError(`ログインに失敗しました（${e.code}）`);
       setLoading(false);
     }
   };
@@ -70,7 +84,7 @@ export default function LoginScreen() {
               <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
             </svg>
           )}
-          {loading ? 'ログイン中...' : 'Googleでログイン'}
+          {loading ? 'ログイン処理中...' : 'Googleでログイン'}
         </button>
 
         {error && (
