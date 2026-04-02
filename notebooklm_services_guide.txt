@@ -1,0 +1,344 @@
+================================================================
+初心者向け解説
+GitHub・Vercel・Firebase とは何か？
+何をするものか・なぜ必要か・どう設定するか
+================================================================
+
+
+================================================================
+1. GitHub とは
+================================================================
+
+■ 一言で言うと
+「コードのバックアップ＋履歴管理サービス」
+
+■ 何をするもの？
+プログラムのソースコードをインターネット上に保存するサービスです。
+Googleドライブがファイルを保存するように、GitHubはコードを保存します。
+ただしGitHubはただ保存するだけでなく、「いつ・誰が・何を変えたか」を
+すべて記録できるのが最大の特徴です。
+
+■ なぜ必要？
+1. コードのバックアップ
+   パソコンが壊れてもGitHubにあれば復元できる
+
+2. 変更履歴の管理
+   「3日前のバージョンに戻したい」が簡単にできる
+
+3. 他サービスとの連携
+   VercelやFirebaseがGitHubのコードを読んで自動デプロイできる
+
+4. チーム開発
+   複数人で同じコードを編集する際の衝突を防げる
+
+■ 基本的な使い方（コマンド）
+
+初期設定（1回だけ）：
+  git config --global user.email "メールアドレス"
+  git config --global user.name "名前"
+
+プロジェクトをGitで管理開始：
+  git init
+
+変更をGitに記録（コミット）：
+  git add .
+  git commit -m "変更内容のメモ"
+
+GitHubに送信（プッシュ）：
+  git push
+
+■ よく使う用語
+
+リポジトリ（repo）：
+  コードとその履歴をまとめて管理する「プロジェクトフォルダ」のこと
+
+コミット：
+  変更内容を「セーブポイント」として記録すること
+
+プッシュ：
+  ローカルのコードをGitHubサーバーに送ること
+
+ブランチ：
+  開発の「分岐」。mainブランチが本番用の安定したコード
+
+■ アカウント作成手順
+1. https://github.com にアクセス
+2. 「Sign up」でGoogleアカウントまたはメールで登録
+3. 無料プランで十分
+
+■ Personal Access Token の作成
+GitHub APIやgit pushにはトークンが必要
+1. GitHub → 右上アイコン → Settings
+2. 左メニュー最下部「Developer settings」
+3. 「Personal access tokens」→「Tokens (classic)」
+4. 「Generate new token (classic)」
+5. Note（メモ）を入力、スコープで「repo」にチェック
+6. 「Generate token」で作成
+7. 表示されたトークン（ghp_...）を必ずコピー（再表示不可）
+
+
+================================================================
+2. Vercel とは
+================================================================
+
+■ 一言で言うと
+「ウェブアプリを世界中に公開するホスティングサービス」
+
+■ 何をするもの？
+作ったウェブアプリに「URL（https://xxx.vercel.app）」を与えて
+誰でもアクセスできるように公開するサービスです。
+GitHubと連携すると「git pushしたら自動で最新版に更新」ができます。
+
+■ なぜ必要？
+ローカル（自分のパソコン）で動いているアプリは自分しか見られません。
+Vercelに乗せることで、スマートフォンからも、他の人からも
+アクセスできる「本物のWebアプリ」になります。
+
+■ Vercelの特徴
+- 無料枠が非常に充実している（個人利用は無料）
+- GitHubと連携してgit pushで自動デプロイ
+- Vite・React・Next.jsなどを自動検知してビルド
+- PWAも問題なくホスト可能
+- CDN（世界中に分散したサーバー）で高速配信
+
+■ インストールと使い方
+
+CLIのインストール：
+  npm install -g vercel
+
+ログイン：
+  vercel
+  → ブラウザが開いてログイン画面が表示される
+
+デプロイ（本番）：
+  vercel --prod
+
+デプロイ一覧確認：
+  vercel ls
+
+■ GitHub自動デプロイの設定手順
+1. Vercelダッシュボード（vercel.com）にアクセス
+2. プロジェクトを選択 → Settings → Git
+3. 「Connect Git Repository」をクリック
+4. 「インストール」ボタン → GitHub Appをインストール
+5. 対象のGitHubアカウント/リポジトリを選択
+→ 以降はgit pushするたびに自動デプロイされる
+
+■ 環境変数の設定
+APIキーなど秘密情報をコードに直接書かずに設定する方法
+
+CLIで追加：
+  vercel env add 変数名 production
+
+ダッシュボードで追加：
+  プロジェクト → Settings → Environment Variables
+
+Viteプロジェクトでの注意：
+  変数名は必ず「VITE_」で始める（例：VITE_FIREBASE_API_KEY）
+  コードで参照：import.meta.env.VITE_FIREBASE_API_KEY
+
+■ よく起きるエラーと解決策
+
+エラー1：npm install が ERESOLVE で失敗
+  原因：パッケージのバージョン依存関係の衝突
+  解決：.npmrc ファイルに「legacy-peer-deps=true」を追加
+
+エラー2：自動デプロイが動かない
+  原因：VercelのGitHub Appが未インストール
+  解決：VercelダッシュボードのGit設定から「インストール」ボタンを押す
+
+エラー3：環境変数に%0Aが入る（改行文字混入）
+  原因：CLIで設定した際に末尾改行が混入
+  解決：コードで .trim() を呼ぶ
+  例：import.meta.env.VITE_FIREBASE_AUTH_DOMAIN?.trim()
+
+
+================================================================
+3. Firebase とは
+================================================================
+
+■ 一言で言うと
+「ログイン機能とデータベースをすぐに使えるGoogleのサービス」
+
+■ 何をするもの？
+アプリに必要な「バックエンド機能」をまるごと提供するサービスです。
+通常、ユーザーのログインやデータ保存のためにはサーバーを
+自前で構築する必要がありますが、Firebaseを使えばコードを
+数行書くだけでこれらが実現できます。
+
+■ Firebaseの主な機能
+
+Authentication（認証）：
+  Googleアカウント・メール・Apple・TwitterなどでのSSO（ログイン）
+  → 「Googleでログイン」ボタンを実装できる
+  → パスワード管理・セキュリティはGoogleが担当
+  → ユーザー管理は自分でやらなくていい
+
+Firestore（データベース）：
+  NoSQL型のリアルタイムデータベース
+  → スマートフォンのデータが即座にPCにも同期される
+  → JSONライクな構造でデータを保存
+  → リアルタイムリスナーで自動更新
+
+Storage：
+  画像・動画・ファイルの保存
+
+Cloud Functions：
+  サーバーレス関数（バックエンド処理）
+
+■ 料金（Sparkプラン＝無料）
+- Authentication：ユーザー数無制限・完全無料
+- Firestore：1GB保存・読み取り5万回/日・書き込み2万回/日
+- 個人アプリなら無料枠で十分
+
+■ プロジェクト作成手順
+1. https://console.firebase.google.com にアクセス
+2. Googleアカウントでログイン
+3. 「プロジェクトを追加」
+4. プロジェクト名を入力（例：crane-analytics）
+5. 不要な機能（Gemini・アナリティクス）はオフでOK
+6. 「プロジェクトを作成」
+
+■ Authentication の設定手順
+1. コンソール左メニュー「セキュリティ」→「Authentication」
+2. 「始める」をクリック
+3. 「Sign-in method」タブ → 使いたいログイン方法を選択
+4. Googleの場合：「Google」→「有効にする」をオン→サポートメール入力→保存
+5. 「Settings」タブ → 「承認済みドメイン」に本番URLを追加
+   例：crane-analytics.vercel.app
+
+■ Firestore の設定手順
+1. 左メニュー「Database と Storage」→「Firestore」
+2. 「データベースの作成」
+3. エディション：Standard
+4. ロケーション：asia-northeast1（日本の場合は東京を選ぶと速い）
+5. セキュリティルール：テストモードで開始（開発中）
+   ※本番前に必ず本番用ルールに変更すること
+
+■ Webアプリの登録手順
+1. コンソール上部「+ アプリを追加」→「</>（ウェブ）」
+2. ニックネームを入力（例：my-app-web）
+3. 「Firebase Hosting」のチェックは不要
+4. 「アプリを登録」
+5. 表示される firebaseConfig をコピーして保存
+
+firebaseConfigの例：
+  const firebaseConfig = {
+    apiKey: "AIzaSy...",
+    authDomain: "xxx.firebaseapp.com",
+    projectId: "xxx",
+    storageBucket: "xxx.firebasestorage.app",
+    messagingSenderId: "123456789",
+    appId: "1:123:web:abc"
+  };
+
+■ コードへの組み込み方
+
+インストール：
+  npm install firebase
+
+初期化ファイル（src/firebase.js）：
+  import { initializeApp } from 'firebase/app';
+  import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+  import { getFirestore } from 'firebase/firestore';
+
+  const app      = initializeApp(firebaseConfig);
+  export const auth     = getAuth(app);
+  export const db       = getFirestore(app);
+  export const provider = new GoogleAuthProvider();
+
+Googleログインの実装：
+  import { signInWithPopup } from 'firebase/auth';
+  await signInWithPopup(auth, provider);
+
+Firestoreへのデータ保存：
+  import { addDoc, collection } from 'firebase/firestore';
+  await addDoc(collection(db, 'users', uid, 'sessions'), data);
+
+Firestoreのデータ読み込み（リアルタイム）：
+  import { onSnapshot, collection } from 'firebase/firestore';
+  onSnapshot(collection(db, 'users', uid, 'sessions'), snap => {
+    const data = snap.docs.map(d => d.data());
+  });
+
+■ Firestoreセキュリティルール（本番用）
+テストモードは30日で期限切れになるため、本番前に変更が必要
+
+本番用ルール（自分のデータのみ読み書き可能）：
+  rules_version = '2';
+  service cloud.firestore {
+    match /databases/{database}/documents {
+      match /users/{userId}/{document=**} {
+        allow read, write: if request.auth != null
+          && request.auth.uid == userId;
+      }
+    }
+  }
+
+設定場所：Firestoreコンソール → 「ルール」タブ
+
+■ よく起きるエラーと解決策
+
+エラー1：ログインに失敗する（auth/unauthorized-domain）
+  原因：本番URLが承認済みドメインに登録されていない
+  解決：Authentication → Settings → 承認済みドメインに追加
+
+エラー2：Illegal url for new iframe（%0Aエラー）
+  原因：authDomainに改行文字が混入
+  解決：コードで .trim() を使って除去
+
+エラー3：signInWithRedirectが動かない（PWA）
+  原因：PWAのサービスワーカーがリダイレクトを干渉
+  解決：signInWithPopupを使う
+
+
+================================================================
+4. 三つのサービスの関係性
+================================================================
+
+GitHub → Vercel → ユーザー
+   ↑          ↓
+  開発者     Firebase
+
+【データの流れ】
+開発者がコードを書く
+  ↓ git push
+GitHubにコードが保存される
+  ↓ 自動検知
+Vercelがビルド＆デプロイ
+  ↓ 公開
+ユーザーがブラウザでアクセス
+  ↓ Googleログイン
+Firebase Authがユーザーを認証
+  ↓ データ操作
+Firestoreにデータが保存・同期
+
+【各サービスの役割】
+GitHub：コードの保管・バージョン管理・チーム開発
+Vercel：アプリの公開・自動デプロイ・CDN配信
+Firebase：ログイン・データベース・バックエンド機能
+
+
+================================================================
+5. 費用について
+================================================================
+
+すべて無料で始められます。
+
+GitHub（無料）：
+  - publicリポジトリ数：無制限
+  - privateリポジトリ：3つまで無料
+
+Vercel（無料・Hobbyプラン）：
+  - プロジェクト数：無制限
+  - 帯域幅：100GB/月
+  - ビルド時間：6000分/月
+  - カスタムドメイン：使用可能
+
+Firebase（無料・Sparkプラン）：
+  - Authentication：無制限ユーザー
+  - Firestore：1GB・5万読み取り/日・2万書き込み/日
+  - Storage：5GB
+  - Cloud Functions：使用不可（有料プランが必要）
+
+================================================================

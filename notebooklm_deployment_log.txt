@@ -1,0 +1,244 @@
+================================================================
+クレーンAna アプリ開発ログ
+GitHub × Vercel × Firebase 導入記録
+================================================================
+
+【概要】
+このドキュメントは、クレーンゲーム期待値分析PWA「クレーンAna」を
+GitHub・Vercel・Firebaseと連携させるまでの全作業ログです。
+実際に行ったコマンド・手順・つまずきポイントをすべて記録しています。
+
+
+================================================================
+PHASE 1：GitHub リポジトリ作成
+================================================================
+
+■ 背景
+ローカルのVite+React PWAプロジェクトをGitHubで管理し、
+コード変更履歴を残せるようにする。
+
+■ 実施内容
+
+1. Gitの初期設定
+   コマンド：
+   git config --global user.email "cfilobehkn25@gmail.com"
+   git config --global user.name "cfilo"
+
+2. プロジェクトをGitリポジトリとして初期化
+   コマンド：
+   git init
+   git add .
+   git commit -m "Initial commit: crane analytics PWA"
+
+3. GitHubにリポジトリを作成（GitHub API経由）
+   GitHubのPersonal Access Token（クラシック）を作成
+   → スコープ：repo にチェック
+   → GitHub APIでリポジトリ作成
+   → リポジトリURL：https://github.com/cfiladmin/crane-analytics
+
+4. リモートリポジトリに接続してpush
+   コマンド：
+   git remote add origin https://github.com/cfiladmin/crane-analytics.git
+   git branch -M main
+   git push -u origin main
+
+■ つまずきポイント
+- gitのuser.email/user.nameが未設定でコミットできなかった
+- GitHubアカウントが2つ（cfilobehkn25とcfiladmin）あり混乱
+- Personal Access Tokenの種類（きめ細かいvs クラシック）で迷った
+  → クラシックのほうがシンプルでよかった
+
+
+================================================================
+PHASE 2：Vercel デプロイ
+================================================================
+
+■ 背景
+GitHubのコードを自動的にVercelにデプロイし、
+URLでアクセスできるWebアプリにする。
+
+■ 実施内容
+
+1. Vercel CLIのインストール
+   コマンド：npm install -g vercel
+
+2. Vercelにログイン
+   コマンド：vercel
+   → ブラウザでVercelアカウントにログイン
+   → コード：CMHQ-SCLG を使用
+
+3. 初回デプロイ（失敗→修正）
+   失敗原因：vite-plugin-pwa@1.2.0 が Vite 8 に未対応でnpm installが失敗
+   修正方法：.npmrcファイルを作成して legacy-peer-deps=true を設定
+
+   .npmrcの内容：
+   legacy-peer-deps=true
+
+4. 再デプロイ成功
+   コマンド：vercel --prod
+   本番URL：https://crane-analytics.vercel.app
+
+5. GitHub自動デプロイ連携
+   設定場所：Vercel ダッシュボード → プロジェクト → Settings → Git
+   手順：
+   - 「Connect Git Repository」をクリック
+   - 「インストール」ボタンでVercel GitHub Appをインストール
+   - cfiladminアカウントにアプリをインストール
+
+   動作確認：git push → 約30秒でVercelに自動デプロイ
+
+■ つまずきポイント
+- npm install が peer deps エラーで失敗
+  → .npmrcで legacy-peer-deps=true が解決策
+- VercelアカウントとGitHubアカウントの紐付けが2段階必要
+  （VercelでGitHub連携 + GitHubでVercelアプリをインストール）
+- 自動デプロイが動かなかった原因：GitHub Appが未インストールだった
+
+
+================================================================
+PHASE 3：Firebase Auth + Firestore 導入
+================================================================
+
+■ 背景
+ユーザーがGoogleアカウントでログインし、
+プレイデータをクラウドのFirestoreに保存・同期できるようにする。
+
+■ Firebase プロジェクト作成手順
+
+1. https://console.firebase.google.com にアクセス
+2. 「Firebase プロジェクトを設定して開始」をクリック
+3. プロジェクト名：crane-analytics
+4. 不要な機能をオフ：
+   - Firebase で Gemini を有効にする → オフ
+   - Google アナリティクスを有効にする → オフ
+5. 「プロジェクトを作成」
+
+■ Authentication 設定
+
+1. 左メニュー「セキュリティ」→「Authentication」
+2. 「始める」をクリック
+3. ログイン プロバイダ で「Google」を選択
+4. 「有効にする」をオン
+5. サポートメール：cfilobehkn25@gmail.com を入力
+6. 「保存」
+
+■ Firestore 設定
+
+1. 左メニュー「Database と Storage」→「Firestore」
+2. 「データベースの作成」
+3. エディション：Standard（デフォルト）
+4. ロケーション：asia-northeast1（東京）
+5. セキュリティルール：テストモードで開始（※後で本番用に変更要）
+
+■ Webアプリ登録とSDK設定
+
+1. 「コンソールに進む」
+2. 「+ アプリを追加」→「</>（ウェブ）」
+3. ニックネーム：crane-analytics-web
+4. Firebase Hosting：設定しない
+5. 表示されたfirebaseConfigをコピー
+
+取得した設定値：
+  apiKey: "AIzaSyDQPLuUoK4VMMA6vSCt_dwVUPGOKcDFFEE"
+  authDomain: "crane-analytics-1a5bf.firebaseapp.com"
+  projectId: "crane-analytics-1a5bf"
+  storageBucket: "crane-analytics-1a5bf.firebasestorage.app"
+  messagingSenderId: "339287946073"
+  appId: "1:339287946073:web:6cd0e0bc76423764d4d248"
+
+■ コード実装
+
+インストール：npm install firebase
+
+作成ファイル：
+- src/firebase.js：Firebase初期化・auth・db・providerをexport
+- src/components/LoginScreen.jsx：Googleログイン画面
+- src/App.jsx：認証状態監視・Firestore読み書き処理
+
+Firestoreのデータ構造：
+  users/
+    {uid}/
+      sessions/     ← プレイ履歴（addDoc で追加）
+      settings/
+        config      ← フック設定（setDoc で保存）
+
+■ Vercel 環境変数設定
+
+コマンド（6つすべて設定）：
+  vercel env add VITE_FIREBASE_API_KEY production
+  vercel env add VITE_FIREBASE_AUTH_DOMAIN production
+  vercel env add VITE_FIREBASE_PROJECT_ID production
+  vercel env add VITE_FIREBASE_STORAGE_BUCKET production
+  vercel env add VITE_FIREBASE_MESSAGING_SENDER_ID production
+  vercel env add VITE_FIREBASE_APP_ID production
+
+■ 承認済みドメイン登録
+
+Firebase コンソール → Authentication → Settings → 承認済みドメイン
+追加：crane-analytics.vercel.app
+
+■ つまずきポイントと解決策
+
+1. ログインボタンを押すと「ログインに失敗しました」
+   原因：authDomainに改行文字（%0A）が混入していた
+   詳細：vercel env add コマンドで設定した際に末尾改行が入った
+   解決：firebase.jsの各設定値に .trim() を追加
+
+   コード例：
+   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN?.trim(),
+
+2. ポップアップが表示されない（最初）
+   原因：上記の%0Aによってauth処理自体が失敗していた
+   解決：trim()修正後、ポップアップ方式に戻したら動作した
+
+3. signInWithRedirectでログインできない
+   原因：PWAのサービスワーカーがリダイレクトを干渉する問題
+   解決：signInWithPopupに切り替え
+
+
+================================================================
+現在の構成（最終状態）
+================================================================
+
+開発フロー：
+  コード変更 → git add . && git commit -m "説明" && git push
+  ↓（自動・約30秒）
+  Vercel が GitHub を検知してビルド＆デプロイ
+  ↓
+  https://crane-analytics.vercel.app に反映
+
+URL一覧：
+  本番URL：https://crane-analytics.vercel.app
+  GitHub：https://github.com/cfiladmin/crane-analytics
+  Firebase：crane-analytics-1a5bf
+
+使用サービス・料金：
+  GitHub：無料（publicリポジトリ）
+  Vercel：無料（Hobbyプラン）
+  Firebase：無料（Sparkプラン）
+    - Firestore：1GB・読み取り5万回/日
+    - Auth：無制限ユーザー・無料
+
+
+================================================================
+今後の対応が必要な事項
+================================================================
+
+1. Firestoreセキュリティルールの本番設定（重要）
+   現在：テストモード（30日で期限切れ）
+   本番用ルール例：
+   rules_version = '2';
+   service cloud.firestore {
+     match /databases/{database}/documents {
+       match /users/{userId}/{document=**} {
+         allow read, write: if request.auth != null
+           && request.auth.uid == userId;
+       }
+     }
+   }
+
+2. PWAアイコンの設定
+   現在：icon-192.pngが404エラー
+   対応：public/icon-192.png と public/icon-512.png を追加
+
+================================================================
