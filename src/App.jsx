@@ -1,13 +1,19 @@
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 import {
-  loadSessions, saveSessions,
-  loadCurrentStore, saveCurrentStore, loadStoreList,
-  loadSettings,
+  collection, addDoc, onSnapshot, deleteDoc, doc,
+  setDoc, getDoc, getDocs, serverTimestamp, query, orderBy,
+} from 'firebase/firestore';
+import { auth, db } from './firebase';
+import {
+  loadCurrentStore, saveCurrentStore,
+  DEFAULT_SETTINGS,
 } from './utils/analytics';
 import PlayScreen    from './components/PlayScreen';
 import Dashboard     from './components/Dashboard';
 import HistoryScreen from './components/HistoryScreen';
 import SettingsScreen from './components/SettingsScreen';
+import LoginScreen   from './components/LoginScreen';
 import { IconPlay, IconChart, IconHistory, IconSettings } from './components/Icons';
 
 const TABS = [
@@ -18,31 +24,88 @@ const TABS = [
 ];
 
 export default function App() {
+  const [user,         setUser]         = useState(undefined); // undefined=確認中
   const [tab,          setTab]          = useState('play');
-  const [sessions,     setSessions]     = useState(() => loadSessions());
+  const [sessions,     setSessions]     = useState([]);
   const [currentStore, setCurrentStore] = useState(() => loadCurrentStore());
-  const [settings,     setSettings]     = useState(() => loadSettings());
+  const [settings,     setSettings]     = useState({ ...DEFAULT_SETTINGS });
 
-  const handleSessionEnd = useCallback((finishedSession) => {
-    setSessions(prev => {
-      const next = [...prev, finishedSession];
-      saveSessions(next);
-      return next;
-    });
+  // ── 認証状態の監視 ────────────────────────────────
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, u => setUser(u ?? null));
+    return unsub;
   }, []);
+
+  // ── Firestore: セッション リアルタイム同期 ────────
+  useEffect(() => {
+    if (!user) return;
+    const q = query(
+      collection(db, 'users', user.uid, 'sessions'),
+      orderBy('createdAt', 'asc')
+    );
+    const unsub = onSnapshot(q, snap => {
+      setSessions(snap.docs.map(d => ({ firestoreId: d.id, ...d.data() })));
+    });
+    return unsub;
+  }, [user]);
+
+  // ── Firestore: 設定 読み込み ───────────────────────
+  useEffect(() => {
+    if (!user) return;
+    getDoc(doc(db, 'users', user.uid, 'settings', 'config')).then(snap => {
+      if (snap.exists()) setSettings({ ...DEFAULT_SETTINGS, ...snap.data() });
+    });
+  }, [user]);
+
+  // ── ハンドラー ────────────────────────────────────
+  const handleSessionEnd = useCallback(async (finished) => {
+    if (!user) return;
+    await addDoc(collection(db, 'users', user.uid, 'sessions'), {
+      ...finished,
+      createdAt: serverTimestamp(),
+    });
+  }, [user]);
 
   const handleStoreChange = useCallback((name) => {
     setCurrentStore(name);
     saveCurrentStore(name);
   }, []);
 
-  const handleClear = useCallback(() => {
-    setSessions([]);
-    saveSessions([]);
-  }, []);
+  const handleClear = useCallback(async () => {
+    if (!user) return;
+    const snap = await getDocs(collection(db, 'users', user.uid, 'sessions'));
+    await Promise.all(snap.docs.map(d =>
+      deleteDoc(doc(db, 'users', user.uid, 'sessions', d.id))
+    ));
+  }, [user]);
 
-  const handleSettingsSave = useCallback((s) => setSettings(s), []);
+  const handleSettingsSave = useCallback(async (s) => {
+    setSettings(s);
+    if (!user) return;
+    await setDoc(doc(db, 'users', user.uid, 'settings', 'config'), s);
+  }, [user]);
 
+  const handleSignOut = useCallback(() => signOut(auth), []);
+
+  // ── ローディング ──────────────────────────────────
+  if (user === undefined) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-arcade-bg">
+        <div className="w-8 h-8 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // ── 未ログイン ────────────────────────────────────
+  if (user === null) {
+    return (
+      <div className="flex flex-col" style={{ height: '100dvh', maxWidth: 480, margin: '0 auto' }}>
+        <LoginScreen />
+      </div>
+    );
+  }
+
+  // ── ログイン済み ──────────────────────────────────
   return (
     <div
       className="flex flex-col"
@@ -52,10 +115,8 @@ export default function App() {
       <header className="flex-shrink-0 px-4 pt-3 pb-2 border-b border-arcade-border
                          flex items-center justify-between bg-arcade-bg">
         <div className="flex items-center gap-2">
-          <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}
-          >
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center"
+               style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
                  stroke="#080810" strokeWidth="2.5" strokeLinecap="round">
               <polyline points="22,12 18,12 15,21 9,3 6,12 2,12" />
@@ -65,7 +126,21 @@ export default function App() {
             クレーン<span style={{ color: '#f59e0b' }}>Ana</span>
           </span>
         </div>
-        <span className="text-arcade-muted text-xs">{sessions.length}件記録済み</span>
+        <div className="flex items-center gap-2">
+          <span className="text-arcade-muted text-xs">{sessions.length}件記録済み</span>
+          {/* アバター＋サインアウト */}
+          <button onClick={handleSignOut}
+            className="no-select flex items-center gap-1.5 cursor-pointer rounded-xl px-2 py-1
+                       border border-arcade-border bg-arcade-cardAlt hover:bg-red-50 transition-colors">
+            {user.photoURL
+              ? <img src={user.photoURL} alt="" className="w-5 h-5 rounded-full" />
+              : <div className="w-5 h-5 rounded-full bg-amber-400 flex items-center justify-center text-xs font-bold text-white">
+                  {user.displayName?.[0] ?? '?'}
+                </div>
+            }
+            <span className="text-arcade-muted text-xs">ログアウト</span>
+          </button>
+        </div>
       </header>
 
       {/* ── コンテンツ ── */}
@@ -79,15 +154,9 @@ export default function App() {
             settings={settings}
           />
         )}
-        {tab === 'dash' && (
-          <Dashboard sessions={sessions} />
-        )}
-        {tab === 'history' && (
-          <HistoryScreen sessions={sessions} onClear={handleClear} />
-        )}
-        {tab === 'settings' && (
-          <SettingsScreen settings={settings} onSave={handleSettingsSave} />
-        )}
+        {tab === 'dash' && <Dashboard sessions={sessions} />}
+        {tab === 'history' && <HistoryScreen sessions={sessions} onClear={handleClear} />}
+        {tab === 'settings' && <SettingsScreen settings={settings} onSave={handleSettingsSave} />}
       </main>
 
       {/* ── ボトムナビ ── */}
@@ -95,17 +164,13 @@ export default function App() {
         {TABS.map(({ id, label, Icon }) => {
           const active = tab === id;
           return (
-            <button
-              key={id}
-              onClick={() => setTab(id)}
+            <button key={id} onClick={() => setTab(id)}
               className="no-select flex-1 flex flex-col items-center justify-center
                          py-3 gap-1 cursor-pointer transition-colors duration-150"
               style={{ minHeight: 58, background: 'none', border: 'none' }}
-              aria-label={label}
-            >
+              aria-label={label}>
               <Icon size={22} color={active ? '#f59e0b' : '#6b7280'} />
-              <span className="text-xs font-medium"
-                style={{ color: active ? '#f59e0b' : '#6b7280' }}>
+              <span className="text-xs font-medium" style={{ color: active ? '#f59e0b' : '#6b7280' }}>
                 {label}
               </span>
             </button>
