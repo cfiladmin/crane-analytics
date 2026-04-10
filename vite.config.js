@@ -8,11 +8,11 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'クレーン・アナリティクス',
-        short_name: 'クレAna',
-        description: 'クレーンゲーム期待値計算・プレイデータ管理',
-        theme_color: '#080810',
-        background_color: '#080810',
+        name: 'クレーンAna',
+        short_name: 'クレーンAna',
+        description: 'クレーンゲームの投資額・期待値をリアルタイム計算。損切りアラート・メルカリ相場比較・技術熟練度η。',
+        theme_color: '#F59E0B',
+        background_color: '#F8FAFC',
         display: 'standalone',
         orientation: 'portrait',
         icons: [
