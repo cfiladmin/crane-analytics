@@ -14,6 +14,7 @@ import Dashboard     from './components/Dashboard';
 import HistoryScreen from './components/HistoryScreen';
 import SettingsScreen from './components/SettingsScreen';
 import LoginScreen   from './components/LoginScreen';
+import LandingPage   from './components/LandingPage';
 import { IconPlay, IconChart, IconHistory, IconSettings } from './components/Icons';
 
 const TABS = [
@@ -25,6 +26,7 @@ const TABS = [
 
 export default function App() {
   const [user,         setUser]         = useState(undefined); // undefined=確認中
+  const [showLogin,    setShowLogin]    = useState(false);    // LP→ログイン遷移
   const [tab,          setTab]          = useState('play');
   const [sessions,     setSessions]     = useState([]);
   const [currentStore, setCurrentStore] = useState(() => loadCurrentStore());
@@ -96,11 +98,14 @@ export default function App() {
     );
   }
 
-  // ── 未ログイン ────────────────────────────────────
+  // ── 未ログイン：ランディングページ or ログイン画面 ──
   if (user === null) {
     return (
       <div className="flex flex-col" style={{ height: '100dvh', maxWidth: 480, margin: '0 auto' }}>
-        <LoginScreen />
+        {showLogin
+          ? <LoginScreen />
+          : <LandingPage onStart={() => setShowLogin(true)} />
+        }
       </div>
     );
   }
