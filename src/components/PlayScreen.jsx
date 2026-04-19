@@ -7,6 +7,153 @@ import {
 import { MachineIcon, IconWarning, IconCheck } from './Icons';
 
 // ══════════════════════════════════════════════════════════
+// GET結果カード画像生成
+// ══════════════════════════════════════════════════════════
+function buildGetCanvas({ prizeName, totalSpent, prizeValue, roiPct, machineName, storeName }) {
+  const W = 1080, H = 1080;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  const isPlus = roiPct !== null && roiPct >= 0;
+  const hasROI = prizeValue > 0;
+
+  // ── 背景グラデーション ──
+  const grd = ctx.createLinearGradient(0, 0, W, H);
+  if (hasROI && isPlus) {
+    grd.addColorStop(0, '#064e3b'); grd.addColorStop(1, '#065f46');
+  } else if (hasROI) {
+    grd.addColorStop(0, '#1e1b4b'); grd.addColorStop(1, '#312e81');
+  } else {
+    grd.addColorStop(0, '#1c1917'); grd.addColorStop(1, '#292524');
+  }
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, 0, W, H);
+
+  // ── 光彩エフェクト ──
+  const radGrd = ctx.createRadialGradient(W/2, H*0.4, 50, W/2, H*0.4, 500);
+  radGrd.addColorStop(0, hasROI && isPlus ? 'rgba(52,211,153,0.18)' : 'rgba(245,158,11,0.15)');
+  radGrd.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = radGrd;
+  ctx.fillRect(0, 0, W, H);
+
+  // ── カード白枠 ──
+  const pad = 64;
+  ctx.save();
+  ctx.shadowColor = hasROI && isPlus ? 'rgba(52,211,153,0.4)' : 'rgba(245,158,11,0.3)';
+  ctx.shadowBlur = 60;
+  ctx.fillStyle = 'rgba(255,255,255,0.06)';
+  ctx.beginPath();
+  ctx.roundRect(pad, pad, W-pad*2, H-pad*2, 56);
+  ctx.fill();
+  ctx.restore();
+
+  // ── ボーダー ──
+  ctx.strokeStyle = hasROI && isPlus ? 'rgba(52,211,153,0.5)' : 'rgba(245,158,11,0.4)';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.roundRect(pad, pad, W-pad*2, H-pad*2, 56);
+  ctx.stroke();
+
+  const accentColor = hasROI && isPlus ? '#34d399' : '#f59e0b';
+
+  // ── GET！大見出し ──
+  ctx.textAlign = 'center';
+  ctx.fillStyle = accentColor;
+  ctx.font = 'bold 100px system-ui, sans-serif';
+  ctx.fillText('🎉  GET！', W/2, 220);
+
+  // ── 区切り線 ──
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(pad+80, 260); ctx.lineTo(W-pad-80, 260);
+  ctx.stroke();
+
+  // ── 景品名 ──
+  const name = prizeName || '景品を獲得';
+  ctx.fillStyle = '#ffffff';
+  ctx.font = `bold ${name.length > 12 ? 62 : 72}px system-ui, sans-serif`;
+  // 長い場合は折り返し
+  if (name.length > 16) {
+    ctx.font = 'bold 54px system-ui, sans-serif';
+    const half = Math.ceil(name.length/2);
+    ctx.fillText(name.slice(0, half), W/2, 360);
+    ctx.fillText(name.slice(half), W/2, 430);
+  } else {
+    ctx.fillText(name, W/2, 390);
+  }
+
+  // ── 数値ブロック ──
+  const blockY = 510;
+  const blockH = 140;
+  const cols   = hasROI ? 3 : 2;
+  const blockW = (W - pad*2 - 32*(cols-1)) / cols;
+
+  const blocks = hasROI
+    ? [
+        { label: '投資額',   value: formatYen(totalSpent), color: '#94a3b8' },
+        { label: 'メルカリ相場', value: formatYen(prizeValue), color: '#94a3b8' },
+        { label: 'ROI',      value: `${roiPct >= 0 ? '+' : ''}${roiPct}%`, color: accentColor },
+      ]
+    : [
+        { label: '投資額',   value: formatYen(totalSpent), color: '#94a3b8' },
+        { label: '機種',     value: (machineName || '').slice(0, 8), color: '#94a3b8' },
+      ];
+
+  blocks.forEach((b, i) => {
+    const bx = pad + i*(blockW+32);
+    // ブロック背景
+    ctx.fillStyle = 'rgba(255,255,255,0.07)';
+    ctx.beginPath();
+    ctx.roundRect(bx, blockY, blockW, blockH, 24);
+    ctx.fill();
+    // ラベル
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.font = '32px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(b.label, bx + blockW/2, blockY + 46);
+    // 値
+    ctx.fillStyle = b.color;
+    ctx.font = `bold ${b.value.length > 7 ? 36 : 44}px system-ui, sans-serif`;
+    ctx.fillText(b.value, bx + blockW/2, blockY + 108);
+  });
+
+  // ── 店舗名 ──
+  if (storeName) {
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.font = '34px system-ui, sans-serif';
+    ctx.fillText(`📍 ${storeName}`, W/2, blockY + blockH + 60);
+  }
+
+  // ── 区切り ──
+  const divY = storeName ? blockY+blockH+100 : blockY+blockH+50;
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(pad+80, divY); ctx.lineTo(W-pad-80, divY);
+  ctx.stroke();
+
+  // ── ハッシュタグ ──
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.font = '34px system-ui, sans-serif';
+  ctx.fillText('#クレーンゲーム #クレゲ', W/2, divY+60);
+
+  // ── アプリ名 ──
+  ctx.fillStyle = accentColor;
+  ctx.font = 'bold 40px system-ui, sans-serif';
+  ctx.fillText('クレーンAna', W/2, divY+130);
+
+  // ── URL ──
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.font = '28px system-ui, sans-serif';
+  ctx.fillText('crane-analytics.vercel.app', W/2, divY+178);
+
+  return canvas;
+}
+
+// ══════════════════════════════════════════════════════════
 // 店舗名バー + 変更ボトムシート
 // ══════════════════════════════════════════════════════════
 function StoreBar({ currentStore, onStoreChange }) {
@@ -244,12 +391,47 @@ function GetConfirmSheet({ totalSpent, machine, onConfirm }) {
   const roiPct   = priceVal > 0 ? Math.round(((priceVal - totalSpent) / totalSpent) * 100) : null;
 
   const handleShare = () => {
-    const nameText  = prizeName.trim() ? `「${prizeName.trim()}」をGET！` : 'クレゲでGET！';
-    const roiText   = priceVal > 0 ? `\nメルカリ相場: ${formatYen(priceVal)} / ROI: ${roiPct >= 0 ? '+' : ''}${roiPct}%` : '';
-    const shareText = `${nameText}\n投資: ${formatYen(totalSpent)}${roiText}\n#クレーンゲーム #クレーンAna\ncrane-analytics.vercel.app`;
-    const url = `https://x.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
-    onConfirm(priceVal, prizeName.trim());
+    const name   = prizeName.trim();
+    const canvas = buildGetCanvas({
+      prizeName:  name,
+      totalSpent,
+      prizeValue: priceVal,
+      roiPct,
+      machineName: machine?.label ?? '',
+      storeName:   '',
+    });
+
+    const tweetText = [
+      name ? `「${name}」をGET！🎉` : 'クレゲでGET！🎉',
+      priceVal > 0
+        ? `投資${formatYen(totalSpent)} / 相場${formatYen(priceVal)} / ROI${roiPct >= 0 ? '+' : ''}${roiPct}%`
+        : `投資${formatYen(totalSpent)}`,
+      '#クレーンゲーム #クレゲ',
+      'crane-analytics.vercel.app',
+    ].join('
+');
+
+    const fallbackToX = () => {
+      window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(tweetText)}`, '_blank', 'noopener,noreferrer');
+    };
+
+    if (navigator.canShare) {
+      canvas.toBlob(async (blob) => {
+        const file = new File([blob], 'crane-get.png', { type: 'image/png' });
+        try {
+          await navigator.share({ files: [file], text: tweetText });
+        } catch {
+          fallbackToX();
+        }
+      }, 'image/png');
+    } else {
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+      a.download = `crane-get-${Date.now()}.png`;
+      a.click();
+      fallbackToX();
+    }
+    onConfirm(priceVal, name);
   };
 
   return (
