@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState, useMemo } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, Cell,
   LineChart, Line, CartesianGrid, ResponsiveContainer,
@@ -156,7 +156,35 @@ function StatCard({ label, value, sub, color = '#D97706', icon, highlight }) {
   );
 }
 
+const PERIODS = [
+  { id: 'all',   label: '全期間' },
+  { id: 'today', label: '今日'   },
+  { id: 'week',  label: '今週'   },
+  { id: 'month', label: '今月'   },
+];
+
+function filterByPeriod(sessions, period) {
+  const now = new Date();
+  switch (period) {
+    case 'today':
+      return sessions.filter(s => new Date(s.date).toDateString() === now.toDateString());
+    case 'week': {
+      const weekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
+      return sessions.filter(s => new Date(s.date) >= weekAgo);
+    }
+    case 'month':
+      return sessions.filter(s => {
+        const d = new Date(s.date);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      });
+    default: return sessions;
+  }
+}
+
 export default function Dashboard({ sessions }) {
+  const [period, setPeriod] = useState('all');
+  const filtered = useMemo(() => filterByPeriod(sessions, period), [sessions, period]);
+
   if (sessions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center">
@@ -172,14 +200,14 @@ export default function Dashboard({ sessions }) {
     );
   }
 
-  const stats    = calcStats(sessions);
-  const eta      = calcEta(sessions);
+  const stats    = calcStats(filtered);
+  const eta      = calcEta(filtered);
   const etaPct   = Math.round(eta * 100);
-  const shareEta = useShareEta(eta, sessions);
+  const shareEta = useShareEta(eta, filtered);
 
   // ── 機種別集計 ────────────────────────────────────
   const machineStats = MACHINE_TYPES.map(m => {
-    const s = sessions.filter(ss => ss.machineId === m.id);
+    const s = filtered.filter(ss => ss.machineId === m.id);
     if (s.length === 0) return null;
     const spent = s.reduce((a, ss) => a + ss.totalSpent, 0);
     const wins  = s.filter(ss => ss.won).length;
@@ -189,14 +217,14 @@ export default function Dashboard({ sessions }) {
   }).filter(Boolean);
 
   // ── 直近10セッション推移 ──────────────────────────
-  const trendData = sessions.slice(-10).map((s, i) => ({
+  const trendData = filtered.slice(-10).map((s, i) => ({
     n:     i + 1,
     spent: s.totalSpent,
     label: s.won ? 'GET' : '撤退',
   }));
 
   // ── ROI ある景品 ─────────────────────────────────
-  const roiItems = sessions
+  const roiItems = filtered
     .filter(s => s.won && s.prizeValue > 0)
     .slice(-8)
     .map((s, i) => {
@@ -212,6 +240,27 @@ export default function Dashboard({ sessions }) {
 
   return (
     <div className="flex flex-col h-full overflow-y-auto p-3 gap-3 animate-fade-in bg-arcade-bg">
+
+      {/* ── 期間フィルタ ── */}
+      <div className="flex gap-1.5">
+        {PERIODS.map(p => (
+          <button key={p.id} onClick={() => setPeriod(p.id)}
+            className="no-select flex-1 text-xs py-2 rounded-xl cursor-pointer border font-semibold transition-colors"
+            style={{
+              background:  period === p.id ? '#FEF3C7' : '#fff',
+              borderColor: period === p.id ? '#D97706' : '#E2E8F0',
+              color:       period === p.id ? '#D97706' : '#94A3B8',
+            }}>
+            {p.label}
+          </button>
+        ))}
+      </div>
+
+      {filtered.length === 0 && (
+        <div className="text-center py-8">
+          <p className="text-arcade-subtext text-sm">この期間のデータがありません</p>
+        </div>
+      )}
 
       {/* ── KPI グリッド 2×3 ── */}
       <div className="grid grid-cols-2 gap-2">
@@ -438,7 +487,7 @@ export default function Dashboard({ sessions }) {
 
       {/* ── 確率機 沼ログ ── */}
       {(() => {
-        const probSessions = sessions.filter(s => s.isProbMachine);
+        const probSessions = filtered.filter(s => s.isProbMachine);
         if (probSessions.length === 0) return null;
         const probSpent = probSessions.reduce((a, s) => a + s.totalSpent, 0);
         const probWins  = probSessions.filter(s => s.won).length;

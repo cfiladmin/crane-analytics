@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useCallback } from 'react';
 import { MACHINE_TYPES, calcStoreStats, formatYen } from '../utils/analytics';
 import { MachineIcon, IconWarning, IconCheck } from './Icons';
 
@@ -17,10 +17,50 @@ function MovementBadge({ movId }) {
   return <p className="font-num text-sm font-semibold" style={{ color: m.color }}>{m.label}</p>;
 }
 
-export default function HistoryScreen({ sessions, onClear }) {
-  const [confirmClear, setConfirmClear] = useState(false);
-  const [storeFilter,  setStoreFilter]  = useState('all');
-  const [sortOrder,    setSortOrder]    = useState('date_desc');
+export default function HistoryScreen({ sessions, onClear, onDeleteSession }) {
+  const [confirmClear,  setConfirmClear]  = useState(false);
+  const [storeFilter,   setStoreFilter]   = useState('all');
+  const [sortOrder,     setSortOrder]     = useState('date_desc');
+  const [selectMode,    setSelectMode]    = useState(false);
+  const [selectedIds,   setSelectedIds]   = useState([]);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const longPressTimer = useRef(null);
+
+  // 長押し開始
+  const handleTouchStart = useCallback((id) => {
+    longPressTimer.current = setTimeout(() => {
+      setSelectMode(true);
+      setSelectedIds([id]);
+    }, 500);
+  }, []);
+
+  // 長押し解除
+  const handleTouchEnd = useCallback(() => {
+    clearTimeout(longPressTimer.current);
+  }, []);
+
+  // タップ（選択モード中はチェックON/OFF）
+  const handleTap = useCallback((id) => {
+    if (!selectMode) return;
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  }, [selectMode]);
+
+  // 選択した件を削除
+  const handleDeleteSelected = useCallback(async () => {
+    await Promise.all(selectedIds.map(id => onDeleteSession(id)));
+    setSelectedIds([]);
+    setSelectMode(false);
+    setConfirmDelete(false);
+  }, [selectedIds, onDeleteSession]);
+
+  // 選択モードキャンセル
+  const handleCancelSelect = () => {
+    setSelectMode(false);
+    setSelectedIds([]);
+    setConfirmDelete(false);
+  };
 
   // ── 店舗リスト生成 ──────────────────────────────
   const storeStats = useMemo(() => calcStoreStats(sessions), [sessions]);
@@ -58,29 +98,70 @@ export default function HistoryScreen({ sessions, onClear }) {
       {/* ── ヘッダー ── */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2 flex-shrink-0">
         <h2 className="text-arcade-text text-base font-semibold">
-          履歴
+          {selectMode ? `${selectedIds.length}件選択中` : '履歴'}
           <span className="text-arcade-muted font-normal text-sm ml-1.5">
             ({filtered.length}/{sessions.length}件)
           </span>
         </h2>
-        {!confirmClear ? (
-          <button onClick={() => setConfirmClear(true)}
-            className="text-arcade-muted text-xs border border-arcade-border rounded-xl px-3 py-1 cursor-pointer bg-arcade-card">
-            全消去
-          </button>
-        ) : (
+
+        {/* 選択モード中 */}
+        {selectMode ? (
           <div className="flex gap-2">
-            <button onClick={() => { onClear(); setConfirmClear(false); }}
-              className="text-white text-xs bg-red-500 rounded-xl px-3 py-1 cursor-pointer">
-              消去する
-            </button>
-            <button onClick={() => setConfirmClear(false)}
-              className="text-arcade-muted text-xs border border-arcade-border rounded-xl px-3 py-1 cursor-pointer bg-arcade-card">
-              キャンセル
-            </button>
+            {!confirmDelete ? (
+              <>
+                <button
+                  onClick={() => selectedIds.length > 0 && setConfirmDelete(true)}
+                  disabled={selectedIds.length === 0}
+                  className="text-white text-xs rounded-xl px-3 py-1 cursor-pointer"
+                  style={{ background: selectedIds.length > 0 ? '#EF4444' : '#CBD5E1' }}>
+                  削除（{selectedIds.length}）
+                </button>
+                <button onClick={handleCancelSelect}
+                  className="text-arcade-muted text-xs border border-arcade-border rounded-xl px-3 py-1 cursor-pointer bg-arcade-card">
+                  キャンセル
+                </button>
+              </>
+            ) : (
+              <>
+                <button onClick={handleDeleteSelected}
+                  className="text-white text-xs bg-red-500 rounded-xl px-3 py-1 cursor-pointer">
+                  本当に削除
+                </button>
+                <button onClick={() => setConfirmDelete(false)}
+                  className="text-arcade-muted text-xs border border-arcade-border rounded-xl px-3 py-1 cursor-pointer bg-arcade-card">
+                  戻る
+                </button>
+              </>
+            )}
           </div>
+        ) : (
+          /* 通常モード */
+          !confirmClear ? (
+            <button onClick={() => setConfirmClear(true)}
+              className="text-arcade-muted text-xs border border-arcade-border rounded-xl px-3 py-1 cursor-pointer bg-arcade-card">
+              全消去
+            </button>
+          ) : (
+            <div className="flex gap-2">
+              <button onClick={() => { onClear(); setConfirmClear(false); }}
+                className="text-white text-xs bg-red-500 rounded-xl px-3 py-1 cursor-pointer">
+                消去する
+              </button>
+              <button onClick={() => setConfirmClear(false)}
+                className="text-arcade-muted text-xs border border-arcade-border rounded-xl px-3 py-1 cursor-pointer bg-arcade-card">
+                キャンセル
+              </button>
+            </div>
+          )
         )}
       </div>
+
+      {/* 長押しヒント */}
+      {!selectMode && sessions.length > 0 && (
+        <p className="px-4 pb-1 text-arcade-muted text-xs flex-shrink-0">
+          💡 長押しで個別選択・削除
+        </p>
+      )}
 
       {/* ── 店舗フィルタ ── */}
       {storeNames.length > 1 && (
@@ -183,20 +264,48 @@ export default function HistoryScreen({ sessions, onClear }) {
       {/* ── セッション一覧 ── */}
       <div className="flex flex-col gap-2 px-4">
         {filtered.map(s => {
-          const machine  = MACHINE_TYPES.find(m => m.id === s.machineId);
-          const isSwamp  = s.totalSpent >= 3000 && !s.won;
-          const profit   = s.won && s.prizeValue > 0 ? s.prizeValue - s.totalSpent : null;
+          const machine    = MACHINE_TYPES.find(m => m.id === s.machineId);
+          const isSwamp    = s.totalSpent >= 3000 && !s.won;
+          const profit     = s.won && s.prizeValue > 0 ? s.prizeValue - s.totalSpent : null;
+          const isSelected = selectedIds.includes(s.firestoreId);
 
           return (
-            <div key={s.id}
-              className="bg-arcade-card rounded-2xl p-3 shadow-bento"
+            <div key={s.id ?? s.firestoreId}
+              className="bg-arcade-card rounded-2xl p-3 shadow-bento select-none"
               style={{
-                border: s.won
-                  ? '1.5px solid #BBF7D0'
-                  : isSwamp ? '1.5px solid #FECACA' : '1.5px solid #E2E8F0',
-              }}>
+                border: isSelected
+                  ? '2px solid #f59e0b'
+                  : s.won
+                    ? '1.5px solid #BBF7D0'
+                    : isSwamp ? '1.5px solid #FECACA' : '1.5px solid #E2E8F0',
+                background: isSelected ? '#fffbeb' : undefined,
+                transition: 'border 0.15s, background 0.15s',
+              }}
+              onTouchStart={() => handleTouchStart(s.firestoreId)}
+              onTouchEnd={handleTouchEnd}
+              onTouchMove={handleTouchEnd}
+              onClick={() => handleTap(s.firestoreId)}
+            >
+              {/* 選択チェック */}
+              {selectMode && (
+                <div className="flex justify-end mb-1">
+                  <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center"
+                       style={{
+                         borderColor: isSelected ? '#f59e0b' : '#CBD5E1',
+                         background:  isSelected ? '#f59e0b' : '#fff',
+                       }}>
+                    {isSelected && (
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
+                           stroke="#fff" strokeWidth="3" strokeLinecap="round">
+                        <polyline points="20,6 9,17 4,12"/>
+                      </svg>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* ヘッダー行 */}
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-2">
                   <MachineIcon machineId={machine?.icon || s.machineId} size={16} color={machine?.color ?? '#94A3B8'} />
                   <div>
@@ -215,6 +324,15 @@ export default function HistoryScreen({ sessions, onClear }) {
                   }
                 </div>
               </div>
+
+              {/* 商品名 */}
+              {s.prizeName && (
+                <div className="mb-1.5 px-2 py-1 rounded-lg inline-flex items-center gap-1"
+                     style={{ background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
+                  <span style={{ fontSize: 11 }}>🏷️</span>
+                  <span className="text-green-700 text-xs font-medium">{s.prizeName}</span>
+                </div>
+              )}
 
               {/* 数値行 */}
               <div className="flex items-end justify-between">

@@ -228,10 +228,11 @@ function MachineSelectScreen({ sessions, currentStore, onSelect, onStoreChange }
 }
 
 // ══════════════════════════════════════════════════════════
-// [新機能1] GET確認シート（メルカリ相場リンク付き）
+// [新機能1] GET確認シート（商品名入力・メルカリ相場・シェア）
 // ══════════════════════════════════════════════════════════
 function GetConfirmSheet({ totalSpent, machine, onConfirm }) {
   const [priceInput,  setPriceInput]  = useState('');
+  const [prizeName,   setPrizeName]   = useState('');
   const [searchQuery, setSearchQuery] = useState(machine?.label ?? '');
   const inputRef = useRef(null);
 
@@ -242,15 +243,24 @@ function GetConfirmSheet({ totalSpent, machine, onConfirm }) {
   const profit   = priceVal > 0 ? priceVal - totalSpent : null;
   const roiPct   = priceVal > 0 ? Math.round(((priceVal - totalSpent) / totalSpent) * 100) : null;
 
+  const handleShare = () => {
+    const nameText  = prizeName.trim() ? `「${prizeName.trim()}」をGET！` : 'クレゲでGET！';
+    const roiText   = priceVal > 0 ? `\nメルカリ相場: ${formatYen(priceVal)} / ROI: ${roiPct >= 0 ? '+' : ''}${roiPct}%` : '';
+    const shareText = `${nameText}\n投資: ${formatYen(totalSpent)}${roiText}\n#クレーンゲーム #クレーンAna\ncrane-analytics.vercel.app`;
+    const url = `https://x.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+    onConfirm(priceVal, prizeName.trim());
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end animate-slide-up"
          style={{ background: 'rgba(15,23,42,0.45)' }}>
-      <div className="rounded-t-3xl p-5 flex flex-col gap-4 bg-arcade-card shadow-bento-lg"
-           style={{ border: '1px solid #E2E8F0', borderBottom: 'none' }}>
+      <div className="rounded-t-3xl p-5 flex flex-col gap-3 bg-arcade-card shadow-bento-lg"
+           style={{ border: '1px solid #E2E8F0', borderBottom: 'none', maxHeight: '92dvh', overflowY: 'auto' }}>
 
         {/* ヘッダー */}
-        <div className="text-center pb-4 border-b border-arcade-border">
-          <div style={{ fontSize: 48, lineHeight: 1.1 }}>🎉</div>
+        <div className="text-center pb-3 border-b border-arcade-border">
+          <div style={{ fontSize: 44, lineHeight: 1.1 }}>🎉</div>
           <p className="text-green-600 text-2xl font-bold mt-1">GET！</p>
           <p className="font-num text-arcade-amber text-lg font-semibold mt-0.5">
             {formatYen(totalSpent)} で獲得
@@ -258,14 +268,26 @@ function GetConfirmSheet({ totalSpent, machine, onConfirm }) {
           <p className="text-arcade-muted text-xs mt-0.5">{machine?.labelLong ?? ''}</p>
         </div>
 
+        {/* 商品名入力 */}
+        <div>
+          <p className="text-arcade-subtext text-xs font-medium mb-1.5">🏷️ 商品名（任意・履歴に表示）</p>
+          <input
+            type="text"
+            placeholder="例：鬼滅の刃 炭治郎 フィギュア"
+            value={prizeName}
+            onChange={e => setPrizeName(e.target.value)}
+            className="w-full bg-arcade-bg border border-arcade-border rounded-2xl
+                       px-3 py-2.5 text-arcade-text text-sm outline-none focus:border-amber-400"
+          />
+        </div>
+
         {/* メルカリ相場チェック＋入力エリア */}
         <div className="flex flex-col gap-2">
 
           {/* 商品名入力＋メルカリ検索ボタン */}
           <div>
-            <p className="text-arcade-subtext text-xs font-medium mb-1.5">商品名で相場を検索</p>
+            <p className="text-arcade-subtext text-xs font-medium mb-1.5">🛒 相場を検索して入力</p>
             <div className="flex gap-2">
-              {/* テキスト入力 */}
               <div className="flex-1 flex items-center gap-2 bg-arcade-bg border border-arcade-border
                               rounded-2xl px-3 py-2 focus-within:border-red-400 transition-colors">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
@@ -287,7 +309,6 @@ function GetConfirmSheet({ totalSpent, machine, onConfirm }) {
                     className="text-arcade-muted text-xs cursor-pointer flex-shrink-0">✕</button>
                 )}
               </div>
-              {/* メルカリ検索ボタン */}
               <a href={mercariUrl} target="_blank" rel="noopener noreferrer"
                  className="no-select flex items-center justify-center gap-1 px-3 rounded-2xl cursor-pointer flex-shrink-0"
                  style={{ background: '#FF4B4B', textDecoration: 'none', minWidth: 68 }}>
@@ -304,25 +325,22 @@ function GetConfirmSheet({ totalSpent, machine, onConfirm }) {
           </div>
 
           {/* 相場入力フィールド */}
-          <div className="flex flex-col gap-1.5">
-            <p className="text-arcade-subtext text-xs font-medium">確認した相場を入力（任意）</p>
-            <div className="flex items-center gap-2 bg-arcade-bg border rounded-2xl px-3 py-2.5 transition-colors"
-                 style={{ borderColor: priceVal > 0 ? '#FF4B4B' : '#E2E8F0' }}>
-              <span className="font-num text-lg text-arcade-subtext">¥</span>
-              <input
-                ref={inputRef}
-                type="number" inputMode="numeric" placeholder="例：3,500"
-                value={priceInput}
-                onChange={e => setPriceInput(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && onConfirm(priceVal)}
-                className="flex-1 font-num text-lg text-arcade-text placeholder-arcade-muted
-                           bg-transparent outline-none"
-              />
-              {priceVal > 0 && (
-                <button onClick={() => setPriceInput('')}
-                  className="text-arcade-muted text-xs cursor-pointer flex-shrink-0">✕</button>
-              )}
-            </div>
+          <div className="flex items-center gap-2 bg-arcade-bg border rounded-2xl px-3 py-2.5 transition-colors"
+               style={{ borderColor: priceVal > 0 ? '#FF4B4B' : '#E2E8F0' }}>
+            <span className="font-num text-lg text-arcade-subtext">¥</span>
+            <input
+              ref={inputRef}
+              type="number" inputMode="numeric" placeholder="確認した相場（任意）"
+              value={priceInput}
+              onChange={e => setPriceInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && onConfirm(priceVal, prizeName.trim())}
+              className="flex-1 font-num text-lg text-arcade-text placeholder-arcade-muted
+                         bg-transparent outline-none"
+            />
+            {priceVal > 0 && (
+              <button onClick={() => setPriceInput('')}
+                className="text-arcade-muted text-xs cursor-pointer flex-shrink-0">✕</button>
+            )}
           </div>
 
           {/* 損益プレビュー */}
@@ -352,12 +370,25 @@ function GetConfirmSheet({ totalSpent, machine, onConfirm }) {
           )}
         </div>
 
-        {/* 記録完了ボタン */}
-        <button onClick={() => onConfirm(priceVal)}
-          className="no-select btn-press w-full py-4 rounded-2xl font-bold text-white text-base cursor-pointer"
-          style={{ background: 'linear-gradient(135deg, #059669, #10b981)', boxShadow: '0 4px 16px rgba(5,150,105,0.25)' }}>
-          {priceVal > 0 ? `相場 ${formatYen(priceVal)} で記録して完了` : '記録して完了'}
-        </button>
+        {/* ボタン群 */}
+        <div className="flex flex-col gap-2">
+          {/* 記録完了ボタン */}
+          <button onClick={() => onConfirm(priceVal, prizeName.trim())}
+            className="no-select btn-press w-full py-4 rounded-2xl font-bold text-white text-base cursor-pointer"
+            style={{ background: 'linear-gradient(135deg, #059669, #10b981)', boxShadow: '0 4px 16px rgba(5,150,105,0.25)' }}>
+            {priceVal > 0 ? `相場 ${formatYen(priceVal)} で記録して完了` : '記録して完了'}
+          </button>
+
+          {/* Xシェアボタン */}
+          <button onClick={handleShare}
+            className="no-select btn-press w-full py-3 rounded-2xl font-bold text-sm cursor-pointer flex items-center justify-center gap-2"
+            style={{ background: '#000', color: '#fff' }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.743l7.73-8.835L1.254 2.25H8.08l4.261 5.632 5.903-5.632zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+            Xでシェアして記録
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -455,6 +486,22 @@ export default function PlayScreen({ sessions, currentStore, onSessionEnd, onSto
 
   const eta = calcEta(sessions);
 
+  // ── スマホ戻るボタン対応 ─────────────────────────
+  useEffect(() => {
+    if (phase === 'playing') window.history.pushState({ crane: 'playing' }, '');
+  }, [phase]);
+  useEffect(() => {
+    const handler = () => {
+      if (phase === 'playing') {
+        setPhase('machine_select');
+        setSession(null);
+        setShowGetSheet(false);
+      }
+    };
+    window.addEventListener('popstate', handler);
+    return () => window.removeEventListener('popstate', handler);
+  }, [phase]);
+
   const handleSelectMachine = (machineId, isProbMachine) => {
     setSession(createSession(machineId, isProbMachine, currentStore));
     setLastMv(null);
@@ -489,7 +536,7 @@ export default function PlayScreen({ sessions, currentStore, onSessionEnd, onSto
   const handleWin = () => setShowGetSheet(true);
 
   // 確認シートで「記録して完了」
-  const handleConfirmWin = useCallback((prizeValue) => {
+  const handleConfirmWin = useCallback((prizeValue, prizeName) => {
     setShowGetSheet(false);
     setSession(prev => {
       const finished = {
@@ -497,6 +544,7 @@ export default function PlayScreen({ sessions, currentStore, onSessionEnd, onSto
         won:        true,
         wonAt:      prev.totalSpent,
         prizeValue: prizeValue > 0 ? prizeValue : null,
+        prizeName:  prizeName || null,
       };
       requestAnimationFrame(() => onSessionEnd(finished));
       return finished;

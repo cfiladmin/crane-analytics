@@ -32,6 +32,16 @@ export default function App() {
   const [currentStore, setCurrentStore] = useState(() => loadCurrentStore());
   const [settings,     setSettings]     = useState({ ...DEFAULT_SETTINGS });
 
+  // ── LP→ログイン 戻るボタン対応 ────────────────────
+  useEffect(() => {
+    if (showLogin) window.history.pushState({ crane: 'login' }, '');
+  }, [showLogin]);
+  useEffect(() => {
+    const handler = () => { if (showLogin) setShowLogin(false); };
+    window.addEventListener('popstate', handler);
+    return () => window.removeEventListener('popstate', handler);
+  }, [showLogin]);
+
   // ── 認証状態の監視 ────────────────────────────────
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, u => setUser(u ?? null));
@@ -79,6 +89,11 @@ export default function App() {
     await Promise.all(snap.docs.map(d =>
       deleteDoc(doc(db, 'users', user.uid, 'sessions', d.id))
     ));
+  }, [user]);
+
+  const handleDeleteSession = useCallback(async (firestoreId) => {
+    if (!user) return;
+    await deleteDoc(doc(db, 'users', user.uid, 'sessions', firestoreId));
   }, [user]);
 
   const handleSettingsSave = useCallback(async (s) => {
@@ -160,7 +175,7 @@ export default function App() {
           />
         )}
         {tab === 'dash' && <Dashboard sessions={sessions} />}
-        {tab === 'history' && <HistoryScreen sessions={sessions} onClear={handleClear} />}
+        {tab === 'history' && <HistoryScreen sessions={sessions} onClear={handleClear} onDeleteSession={handleDeleteSession} />}
         {tab === 'settings' && <SettingsScreen settings={settings} onSave={handleSettingsSave} />}
       </main>
 
