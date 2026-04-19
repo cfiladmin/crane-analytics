@@ -6,16 +6,25 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState('');
 
+  const trackEvent = (name, params = {}) => {
+    if (typeof window.gtag === 'function') window.gtag('event', name, params);
+  };
+
   const handleLogin = async () => {
     setLoading(true);
     setError('');
+    trackEvent('login_attempt'); // ログイン試行
     try {
-      await signInWithPopup(auth, provider);
-      // 成功すれば onAuthStateChanged が自動で user をセット
+      const result = await signInWithPopup(auth, provider);
+      // 新規 or 既存ユーザー判定
+      const isNew = result._tokenResponse?.isNewUser ?? false;
+      trackEvent('login', { method: 'Google' });               // GA4標準イベント
+      if (isNew) trackEvent('sign_up', { method: 'Google' });  // 新規登録
     } catch (e) {
       console.error('Login error:', e.code, e.message);
       if (e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') {
         setError(`ログインに失敗しました（${e.code}）`);
+        trackEvent('login_error', { error_code: e.code });
       }
       setLoading(false);
     }

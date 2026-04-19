@@ -178,8 +178,17 @@ function FeatureCard({ icon: Icon, color, title, desc, badge }) {
 }
 
 /* ── メインコンポーネント ────────────────────── */
+const trackEvent = (name, params = {}) => {
+  if (typeof window.gtag === 'function') window.gtag('event', name, params);
+};
+
 export default function LandingPage({ onStart }) {
   const [showMore, setShowMore] = useState(false);
+
+  const handleStart = (position) => {
+    trackEvent('lp_cta_click', { position }); // どのCTAボタンか
+    onStart();
+  };
 
   return (
     <div
@@ -217,7 +226,7 @@ export default function LandingPage({ onStart }) {
 
         {/* CTA ボタン */}
         <button
-          onClick={onStart}
+          onClick={() => handleStart('hero')}
           className="w-full flex items-center justify-center gap-2.5
                      py-4 rounded-2xl font-bold text-sm cursor-pointer
                      active:scale-95 transition-transform"
@@ -376,7 +385,7 @@ export default function LandingPage({ onStart }) {
           今日から、数字で判断しよう。
         </p>
         <button
-          onClick={onStart}
+          onClick={() => handleStart('footer')}
           className="w-full flex items-center justify-center gap-2.5
                      py-4 rounded-2xl font-bold cursor-pointer
                      active:scale-95 transition-transform"
