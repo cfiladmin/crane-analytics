@@ -27,3 +27,13 @@ dist-ssr
 .env
 .env.local
 .env.production
+
+# 非公開ドキュメント
+MONETIZATION_STRATEGY.*
+CRO_STRATEGY.*
+*_STRATEGY.*
+*_roadmap.*
+notebooklm_*.txt
+
+# Claude設定
+.claude/
