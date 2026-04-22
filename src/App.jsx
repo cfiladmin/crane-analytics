@@ -44,7 +44,24 @@ export default function App() {
 
   // ── 認証状態の監視 ────────────────────────────────
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, u => setUser(u ?? null));
+    let prevUser = undefined; // undefined=初回未確認
+    const unsub = onAuthStateChanged(auth, u => {
+      // null→User への変化 = 新規ログイン
+      if (prevUser === null && u) {
+        const trackEvent = (name, params = {}) => {
+          if (typeof window.gtag === 'function') window.gtag('event', name, params);
+        };
+        trackEvent('login', { method: 'Google' });
+        // 作成時刻と最終ログイン時刻が一致 = 新規登録
+        const created  = u.metadata?.creationTime;
+        const lastSign = u.metadata?.lastSignInTime;
+        if (created && lastSign && created === lastSign) {
+          trackEvent('sign_up', { method: 'Google' });
+        }
+      }
+      prevUser = u ?? null;
+      setUser(u ?? null);
+    });
     return unsub;
   }, []);
 
