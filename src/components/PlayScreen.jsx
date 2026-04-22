@@ -408,8 +408,7 @@ function GetConfirmSheet({ totalSpent, machine, onConfirm }) {
         : `投資${formatYen(totalSpent)}`,
       '#クレーンゲーム #クレゲ',
       'crane-analytics.vercel.app',
-    ].join('
-');
+    ].join('\n');
 
     const fallbackToX = () => {
       window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(tweetText)}`, '_blank', 'noopener,noreferrer');
