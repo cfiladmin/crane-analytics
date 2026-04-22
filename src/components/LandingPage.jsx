@@ -280,6 +280,49 @@ export default function LandingPage({ onStart }) {
         </div>
       </section>
 
+      {/* ── 作者ストーリー ── */}
+      <section className="px-5 pb-6">
+        <div className="rounded-2xl p-5"
+             style={{ background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)', border: '1px solid #fde68a' }}>
+
+          {/* ヘッダー */}
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 text-xl"
+                 style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', boxShadow: '0 2px 8px rgba(245,158,11,0.3)' }}>
+              🎮
+            </div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 800, color: '#0f172a' }}>作った人の話</div>
+              <div style={{ fontSize: 11, color: '#92400e' }}>クレゲで1.5万溶かした本人です</div>
+            </div>
+          </div>
+
+          {/* ストーリー */}
+          <div className="flex flex-col gap-3">
+            <p style={{ fontSize: 13, color: '#44403c', lineHeight: 1.8 }}>
+              「あと少しで取れる」<br />
+              その言葉を信じて、気づいたら
+              <strong style={{ color: '#b45309' }}> 1回のゲーセンで1.5万円</strong>
+              消えていました。
+            </p>
+            <p style={{ fontSize: 13, color: '#44403c', lineHeight: 1.8 }}>
+              感情のまま続けると、いつも同じ後悔をする。<br />
+              だから<strong style={{ color: '#0f172a' }}>「やめる基準を数字で決める」</strong>アプリを
+              自分のために作りました。
+            </p>
+            <div className="rounded-xl px-4 py-3 flex items-center gap-3"
+                 style={{ background: '#fff', border: '1px solid #fde68a' }}>
+              <span style={{ fontSize: 22 }}>📉→📈</span>
+              <p style={{ fontSize: 12, color: '#44403c', lineHeight: 1.6 }}>
+                使い始めてから、クレゲの月の出費が
+                <strong style={{ color: '#16a34a' }}> ほぼ半分</strong>になりました。<br />
+                <span style={{ color: '#78350f' }}>同じ思いをしてほしくないので、無料で公開しています。</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── 信頼・安心セクション ── */}
       <section className="px-5 pb-6">
         <div className="rounded-2xl p-4"
