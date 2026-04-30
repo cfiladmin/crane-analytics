@@ -179,7 +179,10 @@ function FeatureCard({ icon: Icon, color, title, desc, badge }) {
 
 /* ── メインコンポーネント ────────────────────── */
 const trackEvent = (name, params = {}) => {
-  if (typeof window.gtag === 'function') window.gtag('event', name, params);
+  if (typeof window.gtag === 'function') window.gtag('event', name, {
+    ...params,
+    transport_type: 'beacon', // ポップアップ開始前でも送信を確実に
+  });
 };
 
 export default function LandingPage({ onStart }) {
