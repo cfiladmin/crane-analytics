@@ -179,10 +179,7 @@ function FeatureCard({ icon: Icon, color, title, desc, badge }) {
 
 /* ── メインコンポーネント ────────────────────── */
 const trackEvent = (name, params = {}) => {
-  if (typeof window.gtag === 'function') window.gtag('event', name, {
-    ...params,
-    transport_type: 'beacon', // ポップアップ開始前でも送信を確実に
-  });
+  if (typeof window.gtag === 'function') window.gtag('event', name, params);
 };
 
 export default function LandingPage({ onStart }) {
@@ -190,7 +187,8 @@ export default function LandingPage({ onStart }) {
 
   const handleStart = (position) => {
     trackEvent('lp_cta_click', { position }); // どのCTAボタンか
-    onStart();
+    // 300ms待ってからログイン画面へ（gtag送信を確実に完了させる）
+    setTimeout(() => onStart(), 300);
   };
 
   return (
