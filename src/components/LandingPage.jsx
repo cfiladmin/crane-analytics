@@ -183,7 +183,7 @@ const trackEvent = (name, params = {}) => {
 };
 
 export default function LandingPage({ onStart }) {
-  const [showMore, setShowMore] = useState(false);
+  const [showMore, setShowMore] = useState(true);
 
   const handleStart = (position) => {
     trackEvent('lp_cta_click', { position }); // どのCTAボタンか
@@ -243,7 +243,12 @@ export default function LandingPage({ onStart }) {
           Googleで無料スタート
         </button>
 
-        <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 10 }}>
+        <div className="flex items-center justify-center gap-3 mt-2">
+          <span style={{ fontSize: 11, color: '#16a34a', fontWeight: 600 }}>👥 現在20人が使用中</span>
+          <span style={{ fontSize: 11, color: '#e2e8f0' }}>|</span>
+          <span style={{ fontSize: 11, color: '#94a3b8' }}>完全無料</span>
+        </div>
+        <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>
           メール送信・投稿は一切なし。ログインはデータ保存のためだけ。
         </p>
       </section>
@@ -321,6 +326,35 @@ export default function LandingPage({ onStart }) {
               </p>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* ── 中間CTA（作者ストーリー直後・最も温まったタイミング） ── */}
+      <section className="px-5 pb-6">
+        <div className="rounded-2xl p-5 text-center flex flex-col items-center gap-3"
+             style={{ background: 'linear-gradient(135deg, #f59e0b10, #d9770608)', border: '2px solid #f59e0b40' }}>
+          <p style={{ fontSize: 13, color: '#92400e', fontWeight: 700 }}>
+            同じ後悔、繰り返してませんか？
+          </p>
+          <button
+            onClick={() => handleStart('mid')}
+            className="w-full flex items-center justify-center gap-2.5
+                       py-3.5 rounded-2xl font-bold cursor-pointer
+                       active:scale-95 transition-transform"
+            style={{
+              maxWidth: 300,
+              background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+              color: '#fff',
+              boxShadow: '0 4px 16px rgba(245,158,11,0.35)',
+              fontSize: 14,
+            }}
+          >
+            <IconGoogle />
+            無料で今すぐ試す
+          </button>
+          <p style={{ fontSize: 11, color: '#a16207' }}>
+            登録30秒・メール不要・ずっと無料
+          </p>
         </div>
       </section>
 
@@ -444,9 +478,13 @@ export default function LandingPage({ onStart }) {
           <IconGoogle />
           Googleで無料スタート
         </button>
-        <div className="flex items-center gap-1.5" style={{ color: '#94a3b8', fontSize: 11 }}>
-          <IconShield />
-          <span>安全・無料・ログインだけ</span>
+        <div className="flex items-center gap-3">
+          <span style={{ fontSize: 11, color: '#16a34a', fontWeight: 600 }}>👥 現在20人が使用中</span>
+          <span style={{ fontSize: 11, color: '#e2e8f0' }}>|</span>
+          <div className="flex items-center gap-1.5" style={{ color: '#94a3b8', fontSize: 11 }}>
+            <IconShield />
+            <span>安全・無料</span>
+          </div>
         </div>
       </section>
     </div>
