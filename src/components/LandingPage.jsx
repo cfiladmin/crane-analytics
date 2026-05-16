@@ -248,9 +248,16 @@ export default function LandingPage({ onStart }) {
           <span style={{ fontSize: 11, color: '#e2e8f0' }}>|</span>
           <span style={{ fontSize: 11, color: '#94a3b8' }}>完全無料</span>
         </div>
-        <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>
-          メール送信・投稿は一切なし。ログインはデータ保存のためだけ。
-        </p>
+
+        {/* 権限プレビュー — Trustオブジェクション対策 */}
+        <div className="flex items-start gap-2 rounded-xl px-3 py-2 mt-2"
+             style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', maxWidth: 320, width: '100%' }}>
+          <span style={{ fontSize: 14, flexShrink: 0, marginTop: 1 }}>🔒</span>
+          <p style={{ fontSize: 11, color: '#15803d', lineHeight: 1.5, margin: 0 }}>
+            <strong>取得するのはメールアドレスのみ</strong><br />
+            投稿・連絡先・Gmailの閲覧 → 一切しません
+          </p>
+        </div>
       </section>
 
       {/* ── アプリプレビュー ── */}
@@ -352,9 +359,15 @@ export default function LandingPage({ onStart }) {
             <IconGoogle />
             無料で今すぐ試す
           </button>
-          <p style={{ fontSize: 11, color: '#a16207' }}>
-            登録30秒・メール不要・ずっと無料
-          </p>
+          <div className="flex flex-col items-center gap-1">
+            <p style={{ fontSize: 11, color: '#a16207', margin: 0 }}>
+              登録30秒・メール不要・ずっと無料
+            </p>
+            <div className="flex items-center gap-1" style={{ fontSize: 11, color: '#6b7280' }}>
+              <span>🔒</span>
+              <span>パスワード不要 · Googleへの投稿なし</span>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -459,9 +472,15 @@ export default function LandingPage({ onStart }) {
         className="px-5 pt-4 pb-10 text-center flex flex-col items-center gap-3"
         style={{ background: 'linear-gradient(180deg, #F8FAFC 0%, #fffbeb 100%)' }}
       >
-        <p style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>
-          今日から、数字で判断しよう。
-        </p>
+        {/* 損失フレーミング — Timingオブジェクション対策 */}
+        <div className="flex flex-col items-center gap-0.5">
+          <p style={{ fontSize: 12, color: '#64748b', margin: 0 }}>
+            今日のクレゲ代、後で思い出せますか？
+          </p>
+          <p style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', margin: 0 }}>
+            記録しないと、永遠にわからないまま。
+          </p>
+        </div>
         <button
           onClick={() => handleStart('footer')}
           className="w-full flex items-center justify-center gap-2.5
@@ -485,6 +504,10 @@ export default function LandingPage({ onStart }) {
             <IconShield />
             <span>安全・無料</span>
           </div>
+        </div>
+        <div className="flex items-center gap-1.5" style={{ fontSize: 11, color: '#6b7280' }}>
+          <span>🔒</span>
+          <span>取得: メールのみ · 投稿・閲覧なし · いつでも連携解除可</span>
         </div>
       </section>
     </div>
