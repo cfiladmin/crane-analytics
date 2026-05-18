@@ -6,7 +6,8 @@
 
     <!-- テーマ・基本 -->
     <meta name="theme-color" content="#F59E0B" />
-    <meta name="description" content="クレーンゲームの投資額・期待値をリアルタイム計算。損切りアラート・メルカリ相場比較・技術熟練度ηを数値化。完全無料PWA。" />
+    <meta name="description" content="クレーンゲームの投資額・期待値・ROIをリアルタイム計算。損切りラインを超えたら即アラート。メルカリ相場と比較してお得か即判断。完全無料・広告なし。" />
+    <meta name="keywords" content="クレーンゲーム 計算, クレゲ 損切り, クレーンゲーム 期待値, UFOキャッチャー 計算, クレーンゲーム アプリ 無料, クレゲ ROI" />
 
     <!-- PWA（iOS） -->
     <meta name="mobile-web-app-capable" content="yes" />
@@ -18,7 +19,7 @@
     <!-- OGP（Twitter/X・LINE・SNS共通） -->
     <meta property="og:type"        content="website" />
     <meta property="og:url"         content="https://crane-analytics.vercel.app/" />
-    <meta property="og:title"       content="クレーンAna｜クレゲ期待値・損切り分析アプリ" />
+    <meta property="og:title"       content="クレーンゲーム計算アプリ【無料】損切り・期待値・ROI | クレーンAna" />
     <meta property="og:description" content="クレゲに使いすぎてない？投資額・期待値をリアルタイム計算。損切りアラート・メルカリ相場比較・技術熟練度η。完全無料。" />
     <meta property="og:image"       content="https://crane-analytics.vercel.app/ogp.png" />
     <meta property="og:locale"      content="ja_JP" />
@@ -26,11 +27,12 @@
 
     <!-- Twitter Card -->
     <meta name="twitter:card"        content="summary_large_image" />
-    <meta name="twitter:title"       content="クレーンAna｜クレゲ期待値・損切り分析アプリ" />
+    <meta name="twitter:title"       content="クレーンゲーム計算アプリ【無料】損切り・期待値・ROI | クレーンAna" />
     <meta name="twitter:description" content="クレゲに使いすぎてない？投資額・期待値をリアルタイム計算。損切りアラート・メルカリ相場比較・技術熟練度η。完全無料。" />
     <meta name="twitter:image"       content="https://crane-analytics.vercel.app/ogp.png" />
 
-    <title>クレーンAna｜クレゲ期待値・損切り分析</title>
+    <title>クレーンゲーム計算アプリ【無料】損切り・期待値・ROI | クレーンAna</title>
+    <link rel="canonical" href="https://crane-analytics.vercel.app/" />
 
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-3489Y385EX"></script>
@@ -41,8 +43,26 @@
       gtag('config', 'G-3489Y385EX');
     </script>
 
+    <!-- 構造化データ（JSON-LD） -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "クレーンAna",
+      "description": "クレーンゲームの投資額・期待値・ROIをリアルタイム計算。損切りアラート・メルカリ相場比較・技術熟練度η。完全無料。",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "Web, iOS, Android",
+      "inLanguage": "ja",
+      "url": "https://crane-analytics.vercel.app/",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "JPY"
+      }
+    }
+    </script>
+
     <!-- Microsoft Clarity（ヒートマップ・セッション録画） -->
-    <!-- TODO: clarity.microsoft.com でプロジェクト作成後、CLARITY_PROJECT_ID を実際のIDに置き換える -->
     <script type="text/javascript">
       (function(c,l,a,r,i,t,y){
         c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};

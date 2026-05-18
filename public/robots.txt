@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://crane-analytics.vercel.app/sitemap.xml
