@@ -192,12 +192,18 @@ export function calcEta(sessions) {
 }
 
 // ── 損切りアラート ────────────────────────────────────────
+// 条件①OR②どちらか一方でアラート発動
 export function shouldRetreat(totalSpent, plays, threshold = 3000, streak = 2) {
-  if (totalSpent < threshold || plays.length < streak) return false;
-  return plays.slice(-streak).every(p => {
-    const lv = MOVEMENT_LEVELS.find(l => l.id === p.movement);
-    return lv ? lv.mm <= 6 : false;
-  });
+  // 条件①：損切り判定額を超えた
+  if (totalSpent >= threshold) return true;
+  // 条件②：連続微動がstreak回以上続いている
+  if (plays.length >= streak) {
+    return plays.slice(-streak).every(p => {
+      const lv = MOVEMENT_LEVELS.find(l => l.id === p.movement);
+      return lv ? lv.mm <= 6 : false;
+    });
+  }
+  return false;
 }
 
 // ── 設定 ─────────────────────────────────────────────────

@@ -637,8 +637,8 @@ function MarketValueSheet({ currentValue, machineName, onSet, onClose }) {
             設定する
           </button>
           <button onClick={onClose}
-            className="no-select px-4 py-3 rounded-2xl text-arcade-muted border border-arcade-border cursor-pointer bg-arcade-cardAlt">
-            スキップ
+            className="no-select px-4 py-3 rounded-2xl text-arcade-muted border border-arcade-border cursor-pointer bg-arcade-cardAlt text-sm">
+            今回は設定しない
           </button>
         </div>
       </div>
@@ -692,6 +692,7 @@ export default function PlayScreen({ sessions, currentStore, onSessionEnd, onSto
     setShowGetSheet(false);
     setEstValue(0);
     setPhase('playing');
+    setShowMarket(true); // 機種選択直後に相場入力シートを自動表示
   };
 
   const handleAddPlay = (movementId) => {
@@ -752,7 +753,14 @@ export default function PlayScreen({ sessions, currentStore, onSessionEnd, onSto
   const machine      = MACHINE_TYPES.find(m => m.id === session?.machineId);
   const totalSpent   = session?.totalSpent ?? 0;
   const playsCount   = session?.plays.length ?? 0;
-  const retreatAlert = session ? shouldRetreat(totalSpent, session.plays, retreatThreshold, smallMoveStreak) : false;
+  // アラートの発動原因を個別に判定（メッセージ表示用）
+  const amountAlert  = totalSpent >= retreatThreshold;
+  const streakAlert  = session && playsCount >= smallMoveStreak &&
+    session.plays.slice(-smallMoveStreak).every(p => {
+      const lv = MOVEMENT_LEVELS.find(l => l.id === p.movement);
+      return lv ? lv.mm <= 6 : false;
+    });
+  const retreatAlert = amountAlert || !!streakAlert;
   // 転売採算割れ：想定額が設定されていて、投資額が超過し、かつ損切りアラートがまだ出ていない場合
   const roiAlert = roiAlertEnabled && estimatedValue > 0 && totalSpent >= estimatedValue && !retreatAlert;
 
@@ -818,7 +826,13 @@ export default function PlayScreen({ sessions, currentStore, onSessionEnd, onSto
           <IconWarning size={20} color="#fff" />
           <div className="flex-1">
             <p className="text-white font-bold text-sm">損切り推奨</p>
-            <p className="text-red-100 text-xs">{formatYen(retreatThreshold)}超え + 微動{smallMoveStreak}回継続 = 期待値マイナス確定</p>
+            <p className="text-red-100 text-xs">
+              {amountAlert && streakAlert
+                ? `${formatYen(retreatThreshold)}超え ＆ 微動${smallMoveStreak}回連続 — 続けるほど損`
+                : amountAlert
+                  ? `投資額が${formatYen(retreatThreshold)}を超えました — 撤退を推奨`
+                  : `微動${smallMoveStreak}回連続 — 景品がほぼ動いていません`}
+            </p>
           </div>
           <button onClick={handleRetreat}
             className="no-select bg-white/20 text-white text-xs rounded-xl px-2 py-1 cursor-pointer">
