@@ -305,9 +305,9 @@ export function calcStats(sessions) {
   const totalSpent       = sessions.reduce((a, s) => a + s.totalSpent, 0);
   const totalWins        = sessions.filter(s => s.won).length;
   const winRate          = Math.round((totalWins / sessions.length) * 100);
-  const wonCosts         = sessions.filter(s => s.won).map(s => s.totalSpent);
-  const avgCostPerWin    = wonCosts.length
-    ? Math.round(wonCosts.reduce((a,v)=>a+v,0)/wonCosts.length) : 0;
+  // 平均獲得単価：全投資額（撤退含む）÷ 獲得数 — 撤退コストも反映した実態値
+  const avgCostPerWin    = totalWins > 0
+    ? Math.round(totalSpent / totalWins) : 0;
   const swampCount       = sessions.filter(s => s.totalSpent >= 3000 && !s.won).length;
   const alertSessions    = sessions.filter(s => s.retreatAlertShown).length;
   const retreatSuccessCount = sessions.filter(s => s.retreatAlertShown && !s.won).length;
@@ -315,9 +315,9 @@ export function calcStats(sessions) {
     ? Math.round((retreatSuccessCount / alertSessions) * 100) : 0;
   const roiSessions      = sessions.filter(s => s.won && s.prizeValue > 0);
   const totalPrizeValue  = roiSessions.reduce((a,s)=>a+s.prizeValue,0);
-  const totalInvested    = roiSessions.reduce((a,s)=>a+s.totalSpent,0);
-  const totalROI         = totalInvested
-    ? Math.round(((totalPrizeValue-totalInvested)/totalInvested)*100) : 0;
+  // ROI分母：全投資額（撤退含む）— 獲得セッションだけにすると良く見えすぎる
+  const totalROI         = (totalPrizeValue > 0 && totalSpent > 0)
+    ? Math.round(((totalPrizeValue - totalSpent) / totalSpent) * 100) : 0;
   return {
     totalSpent, totalWins, avgCostPerWin, winRate, swampCount,
     retreatSuccessCount, retreatSuccessRate,

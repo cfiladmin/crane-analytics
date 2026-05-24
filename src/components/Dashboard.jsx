@@ -211,8 +211,8 @@ export default function Dashboard({ sessions }) {
     if (s.length === 0) return null;
     const spent = s.reduce((a, ss) => a + ss.totalSpent, 0);
     const wins  = s.filter(ss => ss.won).length;
-    const avg   = wins > 0
-      ? Math.round(s.filter(ss=>ss.won).reduce((a,ss)=>a+ss.totalSpent,0)/wins) : 0;
+    // 全投資（撤退含む）÷ 獲得数 で実態を反映
+    const avg   = wins > 0 ? Math.round(spent / wins) : 0;
     return { name: m.label.replace('橋渡し（','').replace('）',''), spent, wins, avg, count: s.length, color: m.color };
   }).filter(Boolean);
 
@@ -311,7 +311,7 @@ export default function Dashboard({ sessions }) {
           value={stats.totalPrizeValue > 0
             ? `${stats.totalROI >= 0 ? '+' : ''}${stats.totalROI}%`
             : '—'}
-          sub={stats.totalPrizeValue > 0 ? '獲得コスト対メルカリ相場' : '獲得時に景品価値を入力'}
+          sub={stats.totalPrizeValue > 0 ? '景品相場 対 全投資額（撤退込み）' : '獲得時に景品価値を入力'}
           color={stats.totalROI >= 0 ? '#059669' : '#DC2626'}
           highlight={stats.totalPrizeValue > 0}
         />
