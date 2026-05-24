@@ -664,6 +664,7 @@ export default function PlayScreen({ sessions, currentStore, onSessionEnd, onSto
   const [showGetSheet,    setShowGetSheet] = useState(false);
   const [estimatedValue,  setEstValue]     = useState(0);   // 転売想定額
   const [showMarketInput, setShowMarket]   = useState(false);
+  const hasEndedRef = useRef(false); // 重複保存ガード
 
   const eta = calcEta(sessions);
 
@@ -684,6 +685,7 @@ export default function PlayScreen({ sessions, currentStore, onSessionEnd, onSto
   }, [phase]);
 
   const handleSelectMachine = (machineId, isProbMachine) => {
+    hasEndedRef.current = false; // 新セッション開始時にリセット
     setSession(createSession(machineId, isProbMachine, currentStore));
     setLastMv(null);
     setAlertShown(false);
@@ -718,32 +720,32 @@ export default function PlayScreen({ sessions, currentStore, onSessionEnd, onSto
 
   // 確認シートで「記録して完了」
   const handleConfirmWin = useCallback((prizeValue, prizeName) => {
+    if (hasEndedRef.current || !session) return; // 重複防止
+    hasEndedRef.current = true;
+    const finished = {
+      ...session,
+      won:        true,
+      wonAt:      session.totalSpent,
+      prizeValue: prizeValue > 0 ? prizeValue : null,
+      prizeName:  prizeName || null,
+    };
     setShowGetSheet(false);
-    setSession(prev => {
-      const finished = {
-        ...prev,
-        won:        true,
-        wonAt:      prev.totalSpent,
-        prizeValue: prizeValue > 0 ? prizeValue : null,
-        prizeName:  prizeName || null,
-      };
-      requestAnimationFrame(() => onSessionEnd(finished));
-      return finished;
-    });
+    setSession(finished);
     setEstValue(0);
     setPhase('machine_select');
-  }, [onSessionEnd]);
+    onSessionEnd(finished); // state更新後に直接呼び出し（重複なし）
+  }, [onSessionEnd, session]);
 
   const handleRetreat = useCallback(() => {
+    if (hasEndedRef.current || !session) return; // 重複防止
+    hasEndedRef.current = true;
+    const finished = { ...session, won: false };
     setShowGetSheet(false);
-    setSession(prev => {
-      const finished = { ...prev, won: false };
-      requestAnimationFrame(() => onSessionEnd(finished));
-      return finished;
-    });
+    setSession(finished);
     setEstValue(0);
     setPhase('machine_select');
-  }, [onSessionEnd]);
+    onSessionEnd(finished); // state更新後に直接呼び出し（重複なし）
+  }, [onSessionEnd, session]);
 
   // ── 計算値 ──────────────────────────────────────────
   const movementMm   = lastMovement ? (MOVEMENT_LEVELS.find(l => l.id === lastMovement)?.mm ?? 14) : 14;
