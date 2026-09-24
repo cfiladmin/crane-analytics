@@ -559,15 +559,104 @@ function GetConfirmSheet({ totalSpent, machine, onConfirm }) {
             style={{ background: 'linear-gradient(135deg, #059669, #10b981)', boxShadow: '0 4px 16px rgba(5,150,105,0.25)' }}>
             {priceVal > 0 ? `相場 ${formatYen(priceVal)} で記録して完了` : '記録して完了'}
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-          {/* Xシェアボタン */}
+// ══════════════════════════════════════════════════════════
+// 記録後 X 投稿モーダル
+// ══════════════════════════════════════════════════════════
+function PostRecordShareModal({ session, onClose }) {
+  const machine = MACHINE_TYPES.find(m => m.id === session?.machineId);
+  const isWon   = session?.won;
+  const roiPct  = isWon && session.prizeValue > 0
+    ? Math.round(((session.prizeValue - session.totalSpent) / session.totalSpent) * 100)
+    : null;
+
+  const tweetText = isWon
+    ? [
+        session.prizeName ? `「${session.prizeName}」をGET！🎉` : 'クレゲでGET！🎉',
+        session.prizeValue > 0
+          ? `投資${formatYen(session.totalSpent)} / 相場${formatYen(session.prizeValue)} / ROI${roiPct >= 0 ? '+' : ''}${roiPct}%`
+          : `投資${formatYen(session.totalSpent)}`,
+        '#クレーンゲーム #クレゲ',
+        'crane-analytics.vercel.app',
+      ].join('\n')
+    : [
+        `${machine?.label ?? 'クレゲ'}で撤退。`,
+        `投資${formatYen(session?.totalSpent ?? 0)} / ${session?.plays?.length ?? 0}手`,
+        '#クレーンゲーム #クレゲ',
+        'crane-analytics.vercel.app',
+      ].join('\n');
+
+  const handleShare = () => {
+    if (isWon) {
+      const canvas = buildGetCanvas({
+        prizeName:  session.prizeName,
+        totalSpent: session.totalSpent,
+        prizeValue: session.prizeValue ?? 0,
+        roiPct,
+        machineName: machine?.label ?? '',
+        storeName:   session.storeName ?? '',
+      });
+      const fallbackToX = () => {
+        window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(tweetText)}`, '_blank', 'noopener,noreferrer');
+      };
+      if (navigator.canShare) {
+        canvas.toBlob(async (blob) => {
+          const file = new File([blob], 'crane-get.png', { type: 'image/png' });
+          try { await navigator.share({ files: [file], text: tweetText }); }
+          catch { fallbackToX(); }
+        }, 'image/png');
+      } else {
+        const a = document.createElement('a');
+        a.href = canvas.toDataURL('image/png');
+        a.download = `crane-get-${Date.now()}.png`;
+        a.click();
+        fallbackToX();
+      }
+    } else {
+      window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(tweetText)}`, '_blank', 'noopener,noreferrer');
+    }
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col justify-end animate-slide-up"
+         style={{ background: 'rgba(15,23,42,0.45)' }}>
+      <div className="rounded-t-3xl p-5 flex flex-col gap-4 bg-arcade-card shadow-bento-lg"
+           style={{ border: '1px solid #E2E8F0', borderBottom: 'none' }}>
+
+        <div className="text-center">
+          <div style={{ fontSize: 36, lineHeight: 1.1 }}>{isWon ? '🎉' : '🏳️'}</div>
+          <p className="text-arcade-text font-bold text-lg mt-1">
+            {isWon ? 'GET！記録しました' : '撤退を記録しました'}
+          </p>
+          <p className="font-num text-arcade-amber text-base mt-0.5">
+            {formatYen(session?.totalSpent ?? 0)} / {session?.plays?.length ?? 0}手
+          </p>
+        </div>
+
+        {/* ツイートプレビュー */}
+        <div className="px-3 py-2.5 rounded-xl text-xs text-arcade-subtext whitespace-pre-line"
+             style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+          {tweetText}
+        </div>
+
+        <div className="flex flex-col gap-2">
           <button onClick={handleShare}
             className="no-select btn-press w-full py-3 rounded-2xl font-bold text-sm cursor-pointer flex items-center justify-center gap-2"
             style={{ background: '#000', color: '#fff' }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.743l7.73-8.835L1.254 2.25H8.08l4.261 5.632 5.903-5.632zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.743l7.73-8.835L1.254 2.25H8.08l4.261 5.632 5.903-5.632z"/>
             </svg>
-            Xでシェアして記録
+            Xに投稿する
+          </button>
+          <button onClick={onClose}
+            className="no-select w-full py-2.5 rounded-2xl text-arcade-muted text-sm cursor-pointer border border-arcade-border bg-arcade-cardAlt">
+            スキップ
           </button>
         </div>
       </div>
@@ -664,6 +753,7 @@ export default function PlayScreen({ sessions, currentStore, onSessionEnd, onSto
   const [showGetSheet,    setShowGetSheet] = useState(false);
   const [estimatedValue,  setEstValue]     = useState(0);   // 転売想定額
   const [showMarketInput, setShowMarket]   = useState(false);
+  const [pendingShare,    setPendingShare] = useState(null); // 記録後シェアモーダル用
   const hasEndedRef = useRef(false); // 重複保存ガード
 
   const eta = calcEta(sessions);
@@ -734,7 +824,8 @@ export default function PlayScreen({ sessions, currentStore, onSessionEnd, onSto
     setSession(finished);
     setEstValue(0);
     setPhase('machine_select');
-    onSessionEnd(finished); // state更新後に直接呼び出し（重複なし）
+    onSessionEnd(finished);
+    setPendingShare(finished);
   }, [onSessionEnd, session]);
 
   const handleRetreat = useCallback(() => {
@@ -745,7 +836,8 @@ export default function PlayScreen({ sessions, currentStore, onSessionEnd, onSto
     setSession(finished);
     setEstValue(0);
     setPhase('machine_select');
-    onSessionEnd(finished); // state更新後に直接呼び出し（重複なし）
+    onSessionEnd(finished);
+    setPendingShare(finished);
   }, [onSessionEnd, session]);
 
   // ── 計算値 ──────────────────────────────────────────
@@ -774,12 +866,20 @@ export default function PlayScreen({ sessions, currentStore, onSessionEnd, onSto
   // ══════════════════════════════════════════════════
   if (phase === 'machine_select') {
     return (
-      <MachineSelectScreen
-        sessions={sessions}
-        currentStore={currentStore}
-        onSelect={handleSelectMachine}
-        onStoreChange={onStoreChange}
-      />
+      <>
+        <MachineSelectScreen
+          sessions={sessions}
+          currentStore={currentStore}
+          onSelect={handleSelectMachine}
+          onStoreChange={onStoreChange}
+        />
+        {pendingShare && (
+          <PostRecordShareModal
+            session={pendingShare}
+            onClose={() => setPendingShare(null)}
+          />
+        )}
+      </>
     );
   }
 

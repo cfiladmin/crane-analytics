@@ -17,6 +17,25 @@ function MovementBadge({ movId }) {
   return <p className="font-num text-sm font-semibold" style={{ color: m.color }}>{m.label}</p>;
 }
 
+function shareSession(s, machine) {
+  const tweetText = s.won
+    ? [
+        s.prizeName ? `「${s.prizeName}」をGET！🎉` : 'クレゲでGET！🎉',
+        s.prizeValue > 0
+          ? `投資${formatYen(s.totalSpent)} / 相場${formatYen(s.prizeValue)} / ROI${Math.round(((s.prizeValue - s.totalSpent) / s.totalSpent) * 100) >= 0 ? '+' : ''}${Math.round(((s.prizeValue - s.totalSpent) / s.totalSpent) * 100)}%`
+          : `投資${formatYen(s.totalSpent)} / ${s.plays.length}手`,
+        '#クレーンゲーム #クレゲ',
+        'crane-analytics.vercel.app',
+      ].join('\n')
+    : [
+        `${machine?.label ?? 'クレゲ'}で撤退。`,
+        `投資${formatYen(s.totalSpent)} / ${s.plays.length}手`,
+        '#クレーンゲーム #クレゲ',
+        'crane-analytics.vercel.app',
+      ].join('\n');
+  window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(tweetText)}`, '_blank', 'noopener,noreferrer');
+}
+
 export default function HistoryScreen({ sessions, onClear, onDeleteSession }) {
   const [confirmClear,  setConfirmClear]  = useState(false);
   const [storeFilter,   setStoreFilter]   = useState('all');
@@ -365,7 +384,19 @@ export default function HistoryScreen({ sessions, onClear, onDeleteSession }) {
                     </div>
                   )}
                 </div>
-                <span className="text-arcade-muted text-xs">{formatDate(s.date)}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-arcade-muted text-xs">{formatDate(s.date)}</span>
+                  {!selectMode && (
+                    <button
+                      onClick={e => { e.stopPropagation(); shareSession(s, machine); }}
+                      className="no-select flex items-center justify-center w-6 h-6 rounded-lg cursor-pointer"
+                      style={{ background: '#000' }}>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="white">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.743l7.73-8.835L1.254 2.25H8.08l4.261 5.632 5.903-5.632z"/>
+                      </svg>
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* 動き履歴バー */}

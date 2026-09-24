@@ -42,6 +42,33 @@ export default function App() {
     return () => window.removeEventListener('popstate', handler);
   }, [showLogin]);
 
+  // ── メインアプリ：ブラウザバックでアプリが消えない対応 ──
+  useEffect(() => {
+    if (!user) return;
+    window.history.replaceState({ crane: 'tab', tab: 'play' }, '');
+  }, [user]);
+
+  const handleTabChange = useCallback((newTab) => {
+    window.history.pushState({ crane: 'tab', tab: newTab }, '');
+    setTab(newTab);
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    const handler = (e) => {
+      if (e.state?.crane === 'tab') {
+        setTab(e.state.tab);
+      } else if (!e.state?.crane) {
+        // 履歴の底 → アプリを抜けさせず再アンカー
+        window.history.pushState({ crane: 'tab', tab: 'play' }, '');
+        setTab('play');
+      }
+      // crane='playing'/'login' は各コンポーネントが処理
+    };
+    window.addEventListener('popstate', handler);
+    return () => window.removeEventListener('popstate', handler);
+  }, [user]);
+
   // ── 認証状態の監視 ────────────────────────────────
   useEffect(() => {
     let prevUser = undefined; // undefined=初回未確認
@@ -201,7 +228,7 @@ export default function App() {
         {TABS.map(({ id, label, Icon }) => {
           const active = tab === id;
           return (
-            <button key={id} onClick={() => setTab(id)}
+            <button key={id} onClick={() => handleTabChange(id)}
               className="no-select flex-1 flex flex-col items-center justify-center
                          py-3 gap-1 cursor-pointer transition-colors duration-150"
               style={{ minHeight: 58, background: 'none', border: 'none' }}
