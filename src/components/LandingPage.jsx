@@ -48,16 +48,9 @@ function AppPreview() {
   return (
     <div
       className="relative mx-auto rounded-3xl overflow-hidden shadow-2xl border border-amber-200"
-      style={{
-        width: '100%',
-        maxWidth: 320,
-        background: '#F8FAFC',
-        fontFamily: 'inherit',
-      }}
+      style={{ width: '100%', maxWidth: 320, background: '#F8FAFC', fontFamily: 'inherit' }}
     >
-      {/* ステータスバー風 */}
-      <div className="h-6 flex items-center px-4 justify-between"
-           style={{ background: '#F8FAFC' }}>
+      <div className="h-6 flex items-center px-4 justify-between" style={{ background: '#F8FAFC' }}>
         <span style={{ fontSize: 10, color: '#94a3b8' }}>クレーンAna</span>
         <div className="flex gap-1">
           {[1,2,3].map(i => (
@@ -66,10 +59,7 @@ function AppPreview() {
           ))}
         </div>
       </div>
-
-      {/* ヘッダー */}
-      <div className="px-4 pb-2 pt-1 border-b"
-           style={{ borderColor: '#e2e8f0', background: '#F8FAFC' }}>
+      <div className="px-4 pb-2 pt-1 border-b" style={{ borderColor: '#e2e8f0', background: '#F8FAFC' }}>
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-lg flex items-center justify-center"
                style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}>
@@ -84,8 +74,6 @@ function AppPreview() {
           <span style={{ fontSize: 11, color: '#94a3b8', marginLeft: 'auto' }}>3件記録済み</span>
         </div>
       </div>
-
-      {/* 投資サマリー */}
       <div className="px-3 pt-3 pb-2">
         <div className="rounded-2xl p-3 mb-2"
              style={{ background: 'linear-gradient(135deg, #f59e0b15, #d9770608)', border: '1px solid #f59e0b30' }}>
@@ -100,8 +88,6 @@ function AppPreview() {
             </div>
           </div>
         </div>
-
-        {/* 損切りアラート */}
         <div className="rounded-xl px-3 py-2 flex items-center gap-2"
              style={{ background: '#fef9c3', border: '1px solid #fde047' }}>
           <span style={{ fontSize: 14 }}>⚠️</span>
@@ -111,8 +97,6 @@ function AppPreview() {
           </div>
         </div>
       </div>
-
-      {/* 機種リスト */}
       <div className="px-3 pb-3">
         <div style={{ fontSize: 10, color: '#94a3b8', marginBottom: 6 }}>プレイ中の機種</div>
         {[
@@ -134,8 +118,6 @@ function AppPreview() {
           </div>
         ))}
       </div>
-
-      {/* ボトムナビ */}
       <div className="flex border-t" style={{ borderColor: '#e2e8f0', background: '#fff' }}>
         {['プレイ', 'ダッシュ', '履歴', '設定'].map((label, i) => (
           <div key={label}
@@ -149,6 +131,152 @@ function AppPreview() {
         ))}
       </div>
     </div>
+  );
+}
+
+/* ── インタラクティブデモ ─────────────────────── */
+function DemoSection({ onStart }) {
+  const [plays, setPlays]           = useState(5);
+  const [perPlay, setPerPlay]       = useState(200);
+  const [won, setWon]               = useState(false);
+  const [prizeValue, setPrizeValue] = useState(2000);
+
+  const totalSpent = plays * perPlay;
+  const roi        = won ? Math.round((prizeValue - totalSpent) / totalSpent * 100) : null;
+
+  const btnBase = {
+    border: 'none',
+    cursor: 'pointer',
+    fontFamily: 'inherit',
+    transition: 'background 0.15s',
+  };
+
+  return (
+    <section className="px-5 pb-6">
+      <div className="rounded-2xl overflow-hidden" style={{ border: '2px solid #f59e0b50' }}>
+        {/* ヘッダー */}
+        <div className="px-4 py-3"
+             style={{ background: 'linear-gradient(135deg, #fffbeb, #fef3c7)', borderBottom: '1px solid #fde68a' }}>
+          <p style={{ fontSize: 14, fontWeight: 800, color: '#92400e', margin: 0 }}>👇 実際に試してみる</p>
+          <p style={{ fontSize: 11, color: '#a16207', margin: '2px 0 0' }}>
+            プレイ回数と金額を入れると自動計算します
+          </p>
+        </div>
+
+        <div className="p-4 flex flex-col gap-4" style={{ background: '#fff' }}>
+          {/* プレイ回数 */}
+          <div>
+            <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600, marginBottom: 8 }}>プレイ回数</div>
+            <div className="flex items-center gap-4">
+              <button onClick={() => setPlays(p => Math.max(1, p - 1))}
+                      className="w-9 h-9 rounded-full flex items-center justify-center"
+                      style={{ ...btnBase, background: '#f1f5f9', color: '#0f172a', fontSize: 20 }}>−</button>
+              <span style={{ fontSize: 26, fontWeight: 900, color: '#0f172a', minWidth: 40, textAlign: 'center' }}>
+                {plays}
+              </span>
+              <button onClick={() => setPlays(p => Math.min(30, p + 1))}
+                      className="w-9 h-9 rounded-full flex items-center justify-center"
+                      style={{ ...btnBase, background: '#fef3c7', color: '#d97706', fontSize: 20 }}>+</button>
+              <span style={{ fontSize: 13, color: '#94a3b8' }}>手</span>
+            </div>
+          </div>
+
+          {/* 1プレイ金額 */}
+          <div>
+            <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600, marginBottom: 8 }}>1プレイの金額</div>
+            <div className="flex gap-2 flex-wrap">
+              {[100, 200, 300, 500].map(v => (
+                <button key={v} onClick={() => setPerPlay(v)}
+                        className="px-4 py-2 rounded-xl text-xs font-bold"
+                        style={{ ...btnBase, background: perPlay === v ? '#f59e0b' : '#f1f5f9', color: perPlay === v ? '#fff' : '#64748b' }}>
+                  ¥{v}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 結果 */}
+          <div>
+            <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600, marginBottom: 8 }}>結果</div>
+            <div className="flex gap-2">
+              <button onClick={() => setWon(false)}
+                      className="flex-1 py-2 rounded-xl text-sm font-bold"
+                      style={{ ...btnBase, background: !won ? '#fee2e2' : '#f1f5f9', color: !won ? '#ef4444' : '#94a3b8' }}>
+                撤退
+              </button>
+              <button onClick={() => setWon(true)}
+                      className="flex-1 py-2 rounded-xl text-sm font-bold"
+                      style={{ ...btnBase, background: won ? '#dcfce7' : '#f1f5f9', color: won ? '#16a34a' : '#94a3b8' }}>
+                GET 🎉
+              </button>
+            </div>
+          </div>
+
+          {/* 景品相場（GET時のみ） */}
+          {won && (
+            <div>
+              <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600, marginBottom: 8 }}>
+                景品の相場（メルカリ価格）
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                {[500, 1000, 1500, 2000, 3000].map(v => (
+                  <button key={v} onClick={() => setPrizeValue(v)}
+                          className="px-3 py-2 rounded-xl text-xs font-bold"
+                          style={{ ...btnBase, background: prizeValue === v ? '#f59e0b' : '#f1f5f9', color: prizeValue === v ? '#fff' : '#64748b' }}>
+                    ¥{v.toLocaleString()}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 計算結果 */}
+          <div className="rounded-2xl p-4"
+               style={{ background: 'linear-gradient(135deg, #f59e0b10, #d9770608)', border: '1px solid #f59e0b30' }}>
+            <div className="flex justify-between items-center">
+              <div>
+                <div style={{ fontSize: 10, color: '#d97706', fontWeight: 600 }}>総投資額</div>
+                <div style={{ fontSize: 30, fontWeight: 900, color: '#0f172a', lineHeight: 1 }}>
+                  ¥{totalSpent.toLocaleString()}
+                </div>
+              </div>
+              <div className="text-right">
+                {won ? (
+                  <>
+                    <div style={{ fontSize: 10, color: '#64748b' }}>ROI</div>
+                    <div style={{ fontSize: 24, fontWeight: 700, color: roi >= 0 ? '#16a34a' : '#ef4444' }}>
+                      {roi >= 0 ? '+' : ''}{roi}%
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ fontSize: 10, color: '#64748b' }}>損益</div>
+                    <div style={{ fontSize: 24, fontWeight: 700, color: '#ef4444' }}>
+                      −¥{totalSpent.toLocaleString()}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+            {won && roi !== null && (
+              <div className="mt-2" style={{ fontSize: 12, fontWeight: 600, color: roi >= 0 ? '#16a34a' : '#ef4444' }}>
+                {roi >= 0
+                  ? `景品が¥${(prizeValue - totalSpent).toLocaleString()}分お得でした 🎉`
+                  : `¥${(totalSpent - prizeValue).toLocaleString()}の損失でした`}
+              </div>
+            )}
+          </div>
+
+          {/* デモCTA */}
+          <button onClick={onStart}
+                  className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-2xl font-bold active:scale-95 transition-transform"
+                  style={{ ...btnBase, background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#fff', fontSize: 14, boxShadow: '0 4px 16px rgba(245,158,11,0.35)' }}>
+            <IconGoogle />
+            この記録を保存する（無料）
+          </button>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -186,37 +314,23 @@ export default function LandingPage({ onStart }) {
   const [showMore, setShowMore] = useState(true);
 
   const handleStart = (position) => {
-    trackEvent('lp_cta_click', { position }); // どのCTAボタンか
-    // 300ms待ってからログイン画面へ（gtag送信を確実に完了させる）
+    trackEvent('lp_cta_click', { position });
     setTimeout(() => onStart(), 300);
   };
 
   return (
-    <div
-      className="flex flex-col overflow-y-auto"
-      style={{ height: '100dvh', background: '#F8FAFC' }}
-    >
+    <div className="flex flex-col overflow-y-auto" style={{ height: '100dvh', background: '#F8FAFC' }}>
+
       {/* ── ヒーローセクション ── */}
-      <section
-        className="px-5 pt-10 pb-6 text-center flex flex-col items-center"
-        style={{ background: 'linear-gradient(180deg, #fffbeb 0%, #F8FAFC 100%)' }}
-      >
-        {/* バッジ */}
+      <section className="px-5 pt-10 pb-6 text-center flex flex-col items-center"
+               style={{ background: 'linear-gradient(180deg, #fffbeb 0%, #F8FAFC 100%)' }}>
         <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full mb-4 text-xs font-semibold"
              style={{ background: '#f59e0b20', color: '#d97706', border: '1px solid #f59e0b40' }}>
           <span>✨</span>
           <span>完全無料　Googleログインのみ</span>
         </div>
 
-        {/* キャッチコピー */}
-        <h1 style={{
-          fontSize: 26,
-          fontWeight: 900,
-          color: '#0f172a',
-          lineHeight: 1.25,
-          letterSpacing: '-0.02em',
-          marginBottom: 12,
-        }}>
+        <h1 style={{ fontSize: 26, fontWeight: 900, color: '#0f172a', lineHeight: 1.25, letterSpacing: '-0.02em', marginBottom: 12 }}>
           クレゲに<br />
           <span style={{ color: '#f59e0b' }}>使いすぎてない？</span>
         </h1>
@@ -225,20 +339,10 @@ export default function LandingPage({ onStart }) {
           損切りラインを超えたら即アラート。
         </p>
 
-        {/* CTA ボタン */}
         <button
           onClick={() => handleStart('hero')}
-          className="w-full flex items-center justify-center gap-2.5
-                     py-4 rounded-2xl font-bold text-sm cursor-pointer
-                     active:scale-95 transition-transform"
-          style={{
-            maxWidth: 320,
-            background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-            color: '#fff',
-            boxShadow: '0 4px 20px rgba(245,158,11,0.4)',
-            fontSize: 15,
-          }}
-        >
+          className="w-full flex items-center justify-center gap-2.5 py-4 rounded-2xl font-bold text-sm cursor-pointer active:scale-95 transition-transform"
+          style={{ maxWidth: 320, background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#fff', boxShadow: '0 4px 20px rgba(245,158,11,0.4)', fontSize: 15 }}>
           <IconGoogle />
           Googleで無料スタート
         </button>
@@ -248,16 +352,6 @@ export default function LandingPage({ onStart }) {
           <span style={{ fontSize: 11, color: '#e2e8f0' }}>|</span>
           <span style={{ fontSize: 11, color: '#94a3b8' }}>完全無料</span>
         </div>
-
-        {/* 権限プレビュー — Trustオブジェクション対策 */}
-        <div className="flex items-start gap-2 rounded-xl px-3 py-2 mt-2"
-             style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', maxWidth: 320, width: '100%' }}>
-          <span style={{ fontSize: 14, flexShrink: 0, marginTop: 1 }}>🔒</span>
-          <p style={{ fontSize: 11, color: '#15803d', lineHeight: 1.5, margin: 0 }}>
-            <strong>取得するのはメールアドレスのみ</strong><br />
-            投稿・連絡先・Gmailの閲覧 → 一切しません
-          </p>
-        </div>
       </section>
 
       {/* ── アプリプレビュー ── */}
@@ -265,31 +359,21 @@ export default function LandingPage({ onStart }) {
         <AppPreview />
       </section>
 
+      {/* ── インタラクティブデモ ── */}
+      <DemoSection onStart={() => handleStart('demo')} />
+
       {/* ── 機能3点 ── */}
       <section className="px-5 pb-6">
         <h2 style={{ fontSize: 16, fontWeight: 800, color: '#0f172a', marginBottom: 14, textAlign: 'center' }}>
           クレゲの「惰性プレイ」を止める3つの機能
         </h2>
         <div className="flex flex-col gap-3">
-          <FeatureCard
-            icon={IconAlert}
-            color="#ef4444"
-            title="損切りアラート"
-            badge="最重要"
-            desc="投資額・微動回数が設定値を超えたら即通知。「あと少し」の沼から守ります。"
-          />
-          <FeatureCard
-            icon={IconTrending}
-            color="#f59e0b"
-            title="ROI・期待値計算"
-            desc="GET後にメルカリ相場を入力するだけ。自動でROIと損益を計算。"
-          />
-          <FeatureCard
-            icon={IconTarget}
-            color="#8b5cf6"
-            title="技術熟練度η（イータ）"
-            desc="プレイデータから自分の腕前スコアを数値化。成長が見えるとやる気が変わる。"
-          />
+          <FeatureCard icon={IconAlert} color="#ef4444" title="損切りアラート" badge="最重要"
+            desc="投資額・微動回数が設定値を超えたら即通知。「あと少し」の沼から守ります。" />
+          <FeatureCard icon={IconTrending} color="#f59e0b" title="ROI・期待値計算"
+            desc="GET後にメルカリ相場を入力するだけ。自動でROIと損益を計算。" />
+          <FeatureCard icon={IconTarget} color="#8b5cf6" title="技術熟練度η（イータ）"
+            desc="プレイデータから自分の腕前スコアを数値化。成長が見えるとやる気が変わる。" />
         </div>
       </section>
 
@@ -297,8 +381,6 @@ export default function LandingPage({ onStart }) {
       <section className="px-5 pb-6">
         <div className="rounded-2xl p-5"
              style={{ background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)', border: '1px solid #fde68a' }}>
-
-          {/* ヘッダー */}
           <div className="flex items-center gap-3 mb-4">
             <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 text-xl"
                  style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', boxShadow: '0 2px 8px rgba(245,158,11,0.3)' }}>
@@ -309,8 +391,6 @@ export default function LandingPage({ onStart }) {
               <div style={{ fontSize: 11, color: '#92400e' }}>クレゲで1.5万溶かした本人です</div>
             </div>
           </div>
-
-          {/* ストーリー */}
           <div className="flex flex-col gap-3">
             <p style={{ fontSize: 13, color: '#44403c', lineHeight: 1.8 }}>
               「あと少しで取れる」<br />
@@ -336,7 +416,7 @@ export default function LandingPage({ onStart }) {
         </div>
       </section>
 
-      {/* ── 中間CTA（作者ストーリー直後・最も温まったタイミング） ── */}
+      {/* ── 中間CTA ── */}
       <section className="px-5 pb-6">
         <div className="rounded-2xl p-5 text-center flex flex-col items-center gap-3"
              style={{ background: 'linear-gradient(135deg, #f59e0b10, #d9770608)', border: '2px solid #f59e0b40' }}>
@@ -345,41 +425,24 @@ export default function LandingPage({ onStart }) {
           </p>
           <button
             onClick={() => handleStart('mid')}
-            className="w-full flex items-center justify-center gap-2.5
-                       py-3.5 rounded-2xl font-bold cursor-pointer
-                       active:scale-95 transition-transform"
-            style={{
-              maxWidth: 300,
-              background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-              color: '#fff',
-              boxShadow: '0 4px 16px rgba(245,158,11,0.35)',
-              fontSize: 14,
-            }}
-          >
+            className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-2xl font-bold cursor-pointer active:scale-95 transition-transform"
+            style={{ maxWidth: 300, background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#fff', boxShadow: '0 4px 16px rgba(245,158,11,0.35)', fontSize: 14 }}>
             <IconGoogle />
             無料で今すぐ試す
           </button>
-          <div className="flex flex-col items-center gap-1">
-            <p style={{ fontSize: 11, color: '#a16207', margin: 0 }}>
-              登録30秒・メール不要・ずっと無料
-            </p>
-            <div className="flex items-center gap-1" style={{ fontSize: 11, color: '#6b7280' }}>
-              <span>🔒</span>
-              <span>パスワード不要 · Googleへの投稿なし</span>
-            </div>
-          </div>
+          <p style={{ fontSize: 11, color: '#a16207', margin: 0 }}>
+            登録30秒・メール不要・ずっと無料
+          </p>
         </div>
       </section>
 
-      {/* ── 信頼・安心セクション ── */}
+      {/* ── 安心セクション ── */}
       <section className="px-5 pb-6">
-        <div className="rounded-2xl p-4"
-             style={{ background: '#fff', border: '1px solid #e2e8f0' }}>
+        <div className="rounded-2xl p-4" style={{ background: '#fff', border: '1px solid #e2e8f0' }}>
           <p style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', marginBottom: 10 }}>
             安心して使えます
           </p>
           {[
-            'Googleアカウントのメール・投稿に一切アクセスしません',
             'データはあなただけが見られます（Firestore認証済み）',
             '広告なし・課金なし・永久無料',
             'タップ1回で記録。計算は全部自動',
@@ -401,8 +464,7 @@ export default function LandingPage({ onStart }) {
           使い方は3ステップ
         </h2>
         <div className="relative">
-          <div className="absolute left-5 top-6 bottom-6 w-0.5"
-               style={{ background: '#e2e8f0', zIndex: 0 }} />
+          <div className="absolute left-5 top-6 bottom-6 w-0.5" style={{ background: '#e2e8f0', zIndex: 0 }} />
           {[
             { step: '1', title: 'Googleでログイン', desc: 'ワンタップで完了。メアドすら入力不要。', emoji: '🔑' },
             { step: '2', title: '機種を選んで記録', desc: 'プレイするたびにタップで記録。動きも選ぶだけ。', emoji: '🕹️' },
@@ -414,9 +476,7 @@ export default function LandingPage({ onStart }) {
                 {step}
               </div>
               <div className="pt-1.5">
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', marginBottom: 2 }}>
-                  {emoji} {title}
-                </div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', marginBottom: 2 }}>{emoji} {title}</div>
                 <div style={{ fontSize: 12, color: '#64748b', lineHeight: 1.5 }}>{desc}</div>
               </div>
             </div>
@@ -424,13 +484,10 @@ export default function LandingPage({ onStart }) {
         </div>
       </section>
 
-      {/* ── FAQ（O/CO） ── */}
+      {/* ── FAQ ── */}
       <section className="px-5 pb-6">
-        <button
-          onClick={() => setShowMore(v => !v)}
-          className="w-full text-left"
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-        >
+        <button onClick={() => setShowMore(v => !v)} className="w-full text-left"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
           <div className="flex items-center justify-between rounded-2xl px-4 py-3"
                style={{ background: '#fff', border: '1px solid #e2e8f0' }}>
             <span style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>よくある質問</span>
@@ -440,25 +497,12 @@ export default function LandingPage({ onStart }) {
         {showMore && (
           <div className="mt-2 flex flex-col gap-2">
             {[
-              {
-                q: 'Googleアカウントで何かされませんか？',
-                a: 'メールの読み書き・SNS投稿・他サービスへのアクセスは一切しません。ログインはFirebaseのデータ保存（UID取得）のためだけです。',
-              },
-              {
-                q: '難しくないですか？',
-                a: 'プレイするたびにタップするだけです。動きの入力も選択式。計算は全て自動で行います。',
-              },
-              {
-                q: '後で課金されますか？',
-                a: '完全無料です。広告も課金要素も一切ありません。ずっと無料で使えます。',
-              },
-              {
-                q: '本当に役立ちますか？',
-                a: '「損切りラインを数値で決める」ことができるアプリです。感覚ではなく数字で判断できるので、無駄な投資が減ります。',
-              },
+              { q: 'Googleアカウントは安全ですか？', a: 'ログインはデータ保存のためだけです。アカウントへの操作は一切行いません。' },
+              { q: '難しくないですか？', a: 'プレイするたびにタップするだけです。動きの入力も選択式。計算は全て自動で行います。' },
+              { q: '後で課金されますか？', a: '完全無料です。広告も課金要素も一切ありません。ずっと無料で使えます。' },
+              { q: '本当に役立ちますか？', a: '「損切りラインを数値で決める」ことができるアプリです。感覚ではなく数字で判断できるので、無駄な投資が減ります。' },
             ].map(({ q, a }) => (
-              <div key={q} className="rounded-2xl px-4 py-3"
-                   style={{ background: '#fff', border: '1px solid #e2e8f0' }}>
+              <div key={q} className="rounded-2xl px-4 py-3" style={{ background: '#fff', border: '1px solid #e2e8f0' }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: '#0f172a', marginBottom: 4 }}>Q. {q}</div>
                 <div style={{ fontSize: 12, color: '#64748b', lineHeight: 1.5 }}>A. {a}</div>
               </div>
@@ -468,32 +512,16 @@ export default function LandingPage({ onStart }) {
       </section>
 
       {/* ── 最終CTA ── */}
-      <section
-        className="px-5 pt-4 pb-10 text-center flex flex-col items-center gap-3"
-        style={{ background: 'linear-gradient(180deg, #F8FAFC 0%, #fffbeb 100%)' }}
-      >
-        {/* 損失フレーミング — Timingオブジェクション対策 */}
+      <section className="px-5 pt-4 pb-10 text-center flex flex-col items-center gap-3"
+               style={{ background: 'linear-gradient(180deg, #F8FAFC 0%, #fffbeb 100%)' }}>
         <div className="flex flex-col items-center gap-0.5">
-          <p style={{ fontSize: 12, color: '#64748b', margin: 0 }}>
-            今日のクレゲ代、後で思い出せますか？
-          </p>
-          <p style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', margin: 0 }}>
-            記録しないと、永遠にわからないまま。
-          </p>
+          <p style={{ fontSize: 12, color: '#64748b', margin: 0 }}>今日のクレゲ代、後で思い出せますか？</p>
+          <p style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', margin: 0 }}>記録しないと、永遠にわからないまま。</p>
         </div>
         <button
           onClick={() => handleStart('footer')}
-          className="w-full flex items-center justify-center gap-2.5
-                     py-4 rounded-2xl font-bold cursor-pointer
-                     active:scale-95 transition-transform"
-          style={{
-            maxWidth: 320,
-            background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-            color: '#fff',
-            boxShadow: '0 4px 20px rgba(245,158,11,0.4)',
-            fontSize: 15,
-          }}
-        >
+          className="w-full flex items-center justify-center gap-2.5 py-4 rounded-2xl font-bold cursor-pointer active:scale-95 transition-transform"
+          style={{ maxWidth: 320, background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#fff', boxShadow: '0 4px 20px rgba(245,158,11,0.4)', fontSize: 15 }}>
           <IconGoogle />
           Googleで無料スタート
         </button>
@@ -504,10 +532,6 @@ export default function LandingPage({ onStart }) {
             <IconShield />
             <span>安全・無料</span>
           </div>
-        </div>
-        <div className="flex items-center gap-1.5" style={{ fontSize: 11, color: '#6b7280' }}>
-          <span>🔒</span>
-          <span>取得: メールのみ · 投稿・閲覧なし · いつでも連携解除可</span>
         </div>
       </section>
     </div>
